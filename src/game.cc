@@ -3001,3 +3001,144 @@ operator << (SaveWriterText &writer, Game &game) {
   return writer;
 }
 
+// take the next knight idle in Inventory and place it at clicked pos
+//  operate on the player who owns the selected MapPos
+int
+Game::debug_place_knight(MapPos cursor_pos) {
+  Log::Info["game.cc"] << "inside place_knight with cursor_pos " << cursor_pos;
+  unsigned int player_index = map->get_owner(cursor_pos);
+  Log::Info["game.cc"] << "inside place_knight, player is " << player_index;
+  Player *player = get_player(player_index);
+  if (map->has_serf(cursor_pos)){
+    Log::Info["game.cc"] << "inside place_knight, there is already a serf at cursor_pos " << cursor_pos << "! returning";
+    return -1;
+  }
+  if (map->get_obj(cursor_pos) != Map::ObjectNone){
+    Log::Info["game.cc"] << "inside place_knight, there is already an object at cursor_pos " << cursor_pos << "! returning";
+    return -1;
+  }
+  int serf_index = -1;
+  MapPos place_pos = cursor_pos;
+  bool zigzag = player_index;
+  int knights_placed = 0;
+
+  // find a knight with State::IdleInStock in an Inventory...
+  for (Serf *serf : get_player_serfs(player)) {
+    if (serf->get_type() < Serf::TypeKnight0 || serf->get_type() > Serf::TypeKnight4)
+      continue;
+    if (serf->get_state() != Serf::StateIdleInStock)
+      continue;
+    serf_index = serf->get_index();
+    Log::Info["game.cc"] << "inside place_knight, found an idle-in-Inv serf of type " << NameSerf[serf->get_type()] << ", index " << serf_index << ", serf->pos " << serf->get_pos();
+    
+    
+    serf->debug_set_pos(place_pos);
+    serf->set_serf_state(Serf::StateKnightFreeWalking);
+    serf_index = serf->get_index();
+    map->set_serf_index(place_pos, serf_index);
+
+    // target pos for now is, "the pos XX tiles to the left/right"
+    MapPos target_pos = bad_map_pos;
+    if (player_index == 0)
+      target_pos = map->move_right_n(place_pos, 12);
+    if (player_index == 1)
+      target_pos = map->move_left_n(place_pos, 12);
+
+    serf->debug_set_knight_fight_dest(target_pos);
+
+    Log::Info["game.cc"] << "inside place_knight, successfully placed knight at cursor_pos " << place_pos;
+    //break;
+    // instead of one, do a column of serfs...
+    knights_placed++;
+    if (knights_placed >= 5){
+      break;
+      Log::Info["game.cc"] << "inside place_knight, successfully placed column of knights, done";
+    }
+    //  moving downward from the clicked pos in a zigzag DownRight-DownLeft...
+    if (zigzag){
+      place_pos = map->move_down_right(place_pos);
+      zigzag = 0;
+    }else{
+      place_pos = map->move_down(place_pos);
+      zigzag = 1;
+    }
+
+  }
+  
+  return serf_index;
+}
+
+/*
+
+  // Calculate distance to target.
+  int dist_col = map->dist_x(target->get_position(), def_serf->get_pos());
+  int dist_row = map->dist_y(target->get_position(), def_serf->get_pos());
+
+  // Send this serf off to fight. 
+  def_serf->send_off_to_fight(dist_col, dist_row);
+
+
+void
+Serf::send_off_to_fight(int dist_col, int dist_row) {
+  // Send this serf off to fight
+  set_state(StateKnightLeaveForWalkToFight);
+  s.leave_for_walk_to_fight.dist_col = dist_col;
+  s.leave_for_walk_to_fight.dist_row = dist_row;
+  s.leave_for_walk_to_fight.field_D = 0;
+  s.leave_for_walk_to_fight.field_E = 0;
+  s.leave_for_walk_to_fight.next_state = StateKnightFreeWalking;
+}
+*/
+
+/*
+  case Serf::StateKnightFreeWalking:
+  reader >> v8;  // 11
+  serf.s.free_walking.dist_col = (int8_t)v8;
+  reader >> v8;  // 12
+  serf.s.free_walking.dist_row = (int8_t)v8;
+  reader >> v8;  // 13
+  serf.s.free_walking.neg_dist1 = (int8_t)v8;
+  reader >> v8;  // 14
+  serf.s.free_walking.neg_dist2 = (int8_t)v8;
+  reader >> v8;  // 15
+  serf.s.free_walking.flags = v8;
+*/
+
+/*
+  int dist1 = s.leaving_building.field_B;
+  int dist2 = s.leaving_building.dest;
+  int neg_dist1 = s.leaving_building.dest2;
+  int neg_dist2 = s.leaving_building.dir;
+  s.free_walking.dist_col = dist1;
+  s.free_walking.dist_row = dist2;
+  s.free_walking.neg_dist1 = neg_dist1;
+  s.free_walking.neg_dist2 = neg_dist2;
+  s.free_walking.flags = 0;
+*/
+
+/*
+  SendSerfToFlagData *data = reinterpret_cast<SendSerfToFlagData*>(d);
+  // Inventory reached 
+  Building *building = flag->get_building();
+  Inventory *inv = building->get_inventory();
+
+  int type = data->serf_type;
+  if (type < 0) {
+    int knight_type = -1;
+    for (int i = 4; i >= -type-1; i--) {
+      if (inv->have_serf((Serf::Type)(Serf::TypeKnight0+i))) {
+        knight_type = i;
+        break;
+      }
+    }
+
+    if (knight_type >= 0) {
+      // Knight of appropriate type was found.
+      Serf *serf =
+              inv->call_out_serf((Serf::Type)(Serf::TypeKnight0+knight_type));
+
+      data->building->knight_request_granted();
+
+      serf->go_out_from_inventory(inv->get_index(),
+                                  data->building->get_flag_index(), -1);
+*/

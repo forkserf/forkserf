@@ -1044,6 +1044,14 @@ Interface::handle_key_pressed(char key, int modifier) {
       }
     }
 
+    case 'k': {
+      if (modifier & 1) {
+        Log::Info["interface"] << "CTRL-K pressed, moving a Knight from Castle to this pos, setting to FreeWalking state";
+        game->debug_place_knight(get_map_cursor_pos());
+      }
+      break;
+    }
+
     case 'j': {
     unsigned int current_index = player->get_index();
     unsigned int next_index = game->get_next_player(player)->get_index();

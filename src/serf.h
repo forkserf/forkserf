@@ -393,6 +393,8 @@ class Serf : public GameObject {
   Type get_type() const { return type; }
   void set_type(Type type);
   void set_serf_state(Serf::State state);
+  void debug_set_pos(MapPos pos);
+  void debug_set_knight_fight_dest(MapPos target_pos);
 
   bool playing_sfx() const { return sound; }
   void start_playing_sfx() { sound = true; }

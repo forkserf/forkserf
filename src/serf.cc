@@ -350,6 +350,36 @@ Serf::set_serf_state(Serf::State new_state){
   set_state(new_state);
 }
 
+// for placing serfs at positions for testing
+void
+Serf::debug_set_pos(MapPos new_pos){
+  Log::Info["serf"] << "inside Serf::debug_set_pos for serf of type " << NameSerf[get_type()] << ", setting to pos " << new_pos;
+  pos = new_pos;
+}
+
+// for placing serfs at positions for testing
+//   based on Serf::send_off_to_fight
+void
+Serf::debug_set_knight_fight_dest(MapPos target_pos){
+  // based on
+  Log::Info["serf"] << "inside Serf::debug_set_knight_fight_dest for serf of type " << NameSerf[get_type()] << ", setting to target_pos " << target_pos;
+  // Calculate distance to target - FreeWalking states don't use a MapPos dest, but col/row coords
+  s.leave_for_walk_to_fight.dist_col = game->get_map()->dist_x(target_pos, get_pos());
+  s.leave_for_walk_to_fight.dist_row = game->get_map()->dist_y(target_pos, get_pos());
+  // these are always zero, copied from Serf::send_off_to_fight
+  s.leave_for_walk_to_fight.field_D = 0;
+  s.leave_for_walk_to_fight.field_E = 0;
+  // I don't think this is needed because I am directly setting knight state to StateKnightFreeWalking
+  //s.leave_for_walk_to_fight.next_state = StateKnightFreeWalking;
+
+  // make them start in the middle of the pos
+  animation = 82;
+  counter = 0;
+
+  // i forget how this is used
+  tick = game->get_tick();
+}
+
 void
 Serf::add_to_defending_queue(unsigned int next_knight_index, bool pause) {
   set_state(StateDefendingCastle);

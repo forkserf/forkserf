@@ -317,6 +317,8 @@ class MapGeometry {
 
   MapPos move_right_n(MapPos pos, int n) const {
     return pos_add(pos, dirs[DirectionRight]*n); }
+  MapPos move_left_n(MapPos pos, int n) const {
+    return pos_add(pos, dirs[DirectionLeft]*n); }
   MapPos move_down_n(MapPos pos, int n) const {
     return pos_add(pos, dirs[DirectionDown]*n); }
 

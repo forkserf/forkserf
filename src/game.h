@@ -148,6 +148,14 @@ class Game {
   // used by AI to check if game is paused
   unsigned int get_game_speed() const { return game_speed; }
 
+  //
+  // field battle stuff
+  //
+
+  // take a knight (from castle of player who owns map tile's) 
+  //   place it as pos, return serf index 
+  int debug_place_knight(MapPos);
+
   unsigned int get_tick() const { return tick; }
   unsigned int get_const_tick() const { return const_tick; }
   unsigned int get_gold_morale_factor() const { return map_gold_morale_factor; }
