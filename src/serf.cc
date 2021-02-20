@@ -53,6 +53,9 @@
 
 static const int counter_from_animation[] = {
   /* Walking (0-80) */
+  // do these correspond to terrain slope?
+  // maybe 511 is steep downhill and 1023 is steep uphill, and 255 is flat?
+  // yes I am pretty sure this is the case after doing some testing
   511, 447, 383, 319, 255, 319, 511, 767, 1023,
   511, 447, 383, 319, 255, 319, 511, 767, 1023,
   511, 447, 383, 319, 255, 319, 511, 767, 1023,
@@ -247,6 +250,9 @@ static const char *serf_state_name[] = {
   "KNIGHT ATTACKING DEFEAT FREE",  // SERF_STATE_KNIGHT_ATTACKING_DEFEAT_FREE
   "WAIT FOR BOAT",  // SERF_STATE_WAIT_FOR_BOAT
   "PASSENGER IN BOAT",  // SERF_STATE_PASSENGER_IN_BOAT
+  "KNIGHT FIELD MARCHING",  // SERF_STATE_KNIGHT_MARCHING
+  "KNIGHT FIELD ATTACKING",  // these aren't used, are they?
+  "KNIGHT FIELD DEFENDING",
 };
 
 
@@ -350,6 +356,22 @@ Serf::set_serf_state(Serf::State new_state){
   set_state(new_state);
 }
 
+// adding support for field battles
+void
+Serf::march(Direction dir, int target_col){
+//  Log::Info["serf"] << "inside Serf::march";
+  set_state(Serf::StateKnightFieldMarching);
+  s.field_marching.dir = dir;
+  s.field_marching.target_col = target_col;
+  s.field_marching.leader = -1;
+  s.field_marching.command = 0;
+
+  // make them start in the middle of the pos
+  animation = 82;
+  counter = 0;
+
+}
+
 // for placing serfs at positions for testing
 void
 Serf::debug_set_pos(MapPos new_pos){
@@ -357,6 +379,7 @@ Serf::debug_set_pos(MapPos new_pos){
   pos = new_pos;
 }
 
+/*
 // for placing serfs at positions for testing
 //   based on Serf::send_off_to_fight
 void
@@ -378,6 +401,48 @@ Serf::debug_set_knight_fight_dest(MapPos target_pos){
 
   // i forget how this is used
   tick = game->get_tick();
+}
+*/
+
+void
+Serf::debug_set_leader(int leader_index){
+  Log::Info["serf.cc"] << "inside debug_set_leader with serf index " << leader_index;
+  Serf *leader = game->get_serf(leader_index);
+  if (leader == nullptr){
+    Log::Warn["serf.cc"] << "inside debug_set_leader with serf index " << get_index() << ", leader Serf* with index " << leader_index << " is nullptr!";
+    return;
+  }
+  Log::Info["serf.cc"] << "inside debug_set_leader with serf of type " << NameSerf[get_type()] << ", index " << leader_index << ", leader is type " << NameSerf[leader->get_type()] << ", index " << leader->get_index() << ", pos " << leader->get_pos();
+  //s.free_walking.leader = leader->get_index();
+  s.field_marching.leader = leader->get_index();
+}
+
+int
+Serf::debug_get_leader(){
+  Log::Info["serf.cc"] << "inside debug_get_leader";
+  if (s.field_marching.leader < 1){
+    Log::Info["serf.cc"] << "inside debug_get_leader, leader not found? s.free_walking.leader = " << s.field_marching.leader;
+    return -1;
+  }
+  Serf *leader = game->get_serf(s.field_marching.leader);
+  if (leader == nullptr){
+    Log::Warn["serf.cc"] << "inside debug_get_leader with serf index " << get_index() << ", leader Serf* with index " << s.field_marching.leader << " is nullptr!";
+    return -1;
+  }
+  Log::Info["serf.cc"] << "inside debug_get_leader with serf index " << get_index() << ", found leader is type " << NameSerf[leader->get_type()] << ", index " << leader->get_index() << ", pos " << leader->get_pos();
+  //return s.free_walking.leader;
+  return s.field_marching.leader;
+}
+
+void
+Serf::debug_set_command(int){
+  Log::Info["serf.cc"] << "inside debug_set_command";
+}
+
+int
+Serf::debug_get_command(){
+  Log::Info["serf.cc"] << "inside debug_get_command";
+  return -1;
 }
 
 void
@@ -5187,6 +5252,32 @@ Serf::handle_knight_attacking() {
 
   const int fight_anim_max[] = { 10, 11, 14, 11, 10 };
 
+  /*
+  ATTACKER animations (always left side?)
+  147     swing mid
+  148     swing high
+  149     swing low
+  150     kick
+  151     jump attack
+  152     swing high  BIG CIRCLE / WIDE
+  153     swing mid
+  154     kick then duck
+  155     jump
+  156     block
+
+  DEFENDER animations (always right side?)  does defender ever swing low?
+  157     swing mid (matches 153)
+  158     swing high (matches 148, 152, 153)
+  159     duck
+  160     duck then kick?
+  161     jump attack
+  162     swing high BIG CIRCLE ?(matches 152)
+  163     swing mid (matches 147, 153)
+  164     duck then kick
+  165     jump
+  166     block
+  */
+
   Serf *def_serf = game->get_serf(s.attacking.def_index);
 
   uint16_t delta = game->get_tick() - tick;
@@ -5253,6 +5344,7 @@ Serf::handle_knight_attacking() {
     } else {
       /* Go to next move in fight sequence. */
       s.attacking.move += 1;
+      //Log::Info["serf.cc"] << "FIGHT s.attack.move = " << s.attacking.move;
       if (s.attacking.attacker_won == 0) move = 4 - move;
       s.attacking.field_D = move;
 
@@ -5260,7 +5352,9 @@ Serf::handle_knight_attacking() {
       int a = fight_anim[move*16 + off];
 
       animation = 146 + ((a >> 4) & 0xf);
+      Log::Info["serf.cc"] << "FIGHT attacker animation = " << animation;
       def_serf->animation = 156 + (a & 0xf);
+      Log::Info["serf.cc"] << "FIGHT defender animation = " << def_serf->animation;
       counter = 72 + (game->random_int() & 0x18);
       def_serf->counter = counter;
     }
@@ -5417,6 +5511,48 @@ Serf::handle_state_knight_free_walking() {
         }
       }
     }
+
+    /* I got this working perfectly for left side, but could never get it quite right for right side
+     disabling for now
+
+    // adding support for field battles
+    //  try to stay with the leader by stopping if he is more than 1 col behind
+    if (s.free_walking.leader > 1 && s.free_walking.leader != get_index()){
+      Serf *leader = game->get_serf(s.free_walking.leader);
+      int player_index = get_owner();
+      if (leader == nullptr){
+        Log::Warn["serf.cc"] << "inside handle_state_knight_free_walking, player " << player_index << ", serf's leader with index " << s.free_walking.leader << " is nullptr!";
+      }else{
+        MapPos leader_pos = leader->get_pos();
+        Log::Info["serf.cc"] << "inside handle_state_knight_free_walking, player " << player_index << ", serf's leader is at pos " << leader_pos;
+        int leader_col_offset = bad_score;
+        Log::Info["serf.cc"] << "inside handle_state_knight_free_walking, player " << player_index << ", serf is at pos " << get_pos() << ", leader is at pos " << leader_pos;
+        // knight is heading east
+        if (s.free_walking.dist_col > 0) {
+          leader_col_offset = game->get_map()->dist_x(leader_pos, get_pos());
+          Log::Info["serf.cc"] << "inside handle_state_knight_free_walking, player " << player_index << ", serf is facing Right, dist_col " << s.free_walking.dist_col << " current col " << game->get_map()->pos_col(get_pos()) << " leader_col_offset " << leader_col_offset << ", leader pos " << leader_pos;
+          s.walking.dir = DirectionRight;
+        }else{
+          // knight is heading west
+          //  I believe the cols are angled, so that if travelling west you are "closer" 
+          //  and if travelling east you are further, so -1...
+          leader_col_offset = game->get_map()->dist_x(leader_pos, get_pos());
+          Log::Info["serf.cc"] << "inside handle_state_knight_free_walking, player " << player_index << ", serf is facing Left, dist_col " << s.free_walking.dist_col << " current col " << game->get_map()->pos_col(get_pos()) << " leader_col_offset " << leader_col_offset << ", leader pos " << leader_pos;
+          s.walking.dir = DirectionLeft;
+        }
+        Log::Info["serf.cc"] << "inside handle_state_knight_free_walking, player " << player_index << ", serf's leader has col offset " << leader_col_offset;
+        if (leader_col_offset < -1){
+          //if (true){
+          Log::Info["serf.cc"] << "inside handle_state_knight_free_walking, player " << player_index << ", serf must wait for leader";
+          Log::Info["serf.cc"] << "inside handle_state_knight_free_walking, player " << player_index << ", serf has walking dir: " << get_walking_dir();
+          animation = 81 + get_walking_dir();
+          counter = 0;
+          return;
+        }
+      }
+    }
+      */
+
 
     handle_free_walking_common();
   }
@@ -6160,6 +6296,16 @@ Serf::update() {
     break;
   case StateBoatPassenger:
     handle_serf_boat_passenger_state();
+    break;
+  // adding support for field battles
+  case StateKnightFieldMarching:
+    handle_knight_field_marching_state();
+    break;
+  case StateKnightFieldAttacking:
+    handle_knight_field_attacking_state();
+    break;
+  case StateKnightFieldDefending:
+    handle_knight_field_defending_state();
     break;
   default:
     Log::Debug["serf"] << "Serf state " << state << " isn't processed";
@@ -7116,3 +7262,109 @@ Serf::print_state() {
   }
   return res.str();
 }
+
+
+// knight walks in one direction until it encounters
+//  an obstacle or enemy, or it panics for some reason
+//   such as dead leader, low morale
+void
+Serf::handle_knight_field_marching_state() {
+  Log::Info["serf.cc"] << "inside handle_knight_field_marching_state";
+  uint16_t delta = game->get_tick() - tick;
+  tick = game->get_tick();
+  counter -= delta;
+  while (counter < 0) {
+
+    // idea - if an obstacle encountered, use the "go around / switch pos" animation to pass through it
+
+    // need to avoid walking on water
+
+    // need to fight enemy in this dir
+    Direction d = Direction(s.field_marching.dir);
+    PMap map = game->get_map();
+    MapPos pos_ = map->move(pos, d);
+
+    if (map->has_serf(pos_)) {
+      Serf *other = game->get_serf_at_pos(pos_);
+      if (get_owner() != other->get_owner()) {
+        // this knight
+        Direction dir = Direction(s.field_marching.dir);
+        set_state(Serf::StateKnightFieldAttacking);
+        s.field_attacking.defender_index = other->get_index();
+        s.field_attacking.dir = dir;
+        counter = counter_from_animation[animation];
+
+        // empty the previous pos
+        map->set_serf_index(pos, 0);
+        //pos = other->get_pos();  // can't do this because the defending serf owns that pos
+      
+        // other knight
+        other->set_serf_state(Serf::StateKnightFieldDefending);
+        other->s.field_defending.attacker_index = this->get_index();
+        other->s.field_defending.attacker_counter = counter;
+        other->s.field_defending.dir = reverse_direction(dir);
+        other->counter += counter_from_animation[other->animation];
+        break;
+      }
+    }
+    change_direction(Direction(s.field_marching.dir), 0);
+    break;
+  }
+}
+
+// knight enters an enemy pos and begins attacking
+void
+Serf::handle_knight_field_attacking_state() {
+  Log::Info["serf.cc"] << "inside handle_knight_field_attacking_state";
+  uint16_t delta = game->get_tick() - tick;
+  tick = game->get_tick();
+  counter -= delta;
+  while (counter < 0) {
+    Log::Info["serf.cc"] << "inside handle_knight_field_attacking_state, counter expired";
+    if (s.field_attacking.dir == DirectionRight) {
+      animation = 147;
+      counter = 120;
+    }else{
+      animation = 157;
+      counter = 120;
+    }
+    Log::Info["serf.cc"] << "inside handle_knight_field_attacking_state, counter set to " << counter << ", animation " << animation;
+    break;
+  }
+}
+
+// one or more attackers have entered this knight's pos
+void
+Serf::handle_knight_field_defending_state() {
+  Log::Info["serf.cc"] << "inside handle_knight_field_defending_state";
+  uint16_t delta = game->get_tick() - tick;
+  tick = game->get_tick();
+  counter -= delta;
+  if (s.field_defending.attacker_index > 0){
+    Serf *other = game->get_serf(s.field_defending.attacker_index);
+    if (other != nullptr){
+      //if (other->counter < 139){  // this is perfect for flat terrain
+      //if (other->counter < s.field_defending.attacker_counter * 0.408 ){  // this is perfect on flat terrain also, but fails a bit on bumpy terrain
+      if (other->counter < s.field_defending.attacker_counter * 0.40 ){  // this works pretty well on varied terrain but needs HEIGHT ADJUSTMENT for attacking serf Y axis
+        // must check to ensure attacker hasn't already stopped, or his attack animations will never play
+        //  because his counter keeps getting set to zero!
+        if (other->animation != 147){
+          Log::Info["serf.cc"] << "inside handle_knight_field_defending_state, telling attacker to stop";
+          other->counter = 0;
+        }
+      }
+    }
+    //while (counter < 0) {
+    //while (other->counter < 0){
+      //animation = 166;
+      //counter = 120;
+        animation = 81 + s.field_defending.dir;
+        counter = 0;
+
+      //break;
+    //}
+  }
+
+}
+
+

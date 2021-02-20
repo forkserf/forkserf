@@ -153,8 +153,8 @@ class Game {
   //
 
   // take a knight (from castle of player who owns map tile's) 
-  //   place it as pos, return serf index 
-  int debug_place_knight(MapPos);
+  //   place it as pos
+  void debug_place_knight(MapPos);
 
   unsigned int get_tick() const { return tick; }
   unsigned int get_const_tick() const { return const_tick; }

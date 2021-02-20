@@ -1,0 +1,26 @@
+ATTACKER
+147     swing mid
+148     swing high
+149     swing low
+150     kick
+151     jump attack
+152     swing high  BIG CIRCLE / WIDE
+153     swing mid
+154     kick then duck
+155     jump
+156     block
+
+DEFENDER
+157     swing mid (matches 153)
+158     swing high (matches 148, 152, 153)
+159     duck
+160     duck then kick?
+161     jump attack
+162     swing high BIG CIRCLE ?(matches 152)
+163     swing mid (matches 147, 153)
+164     duck then kick
+165     jump
+166     block
+
+
+

@@ -3003,69 +3003,83 @@ operator << (SaveWriterText &writer, Game &game) {
 
 // take the next knight idle in Inventory and place it at clicked pos
 //  operate on the player who owns the selected MapPos
-int
+void
 Game::debug_place_knight(MapPos cursor_pos) {
   Log::Info["game.cc"] << "inside place_knight with cursor_pos " << cursor_pos;
-  unsigned int player_index = map->get_owner(cursor_pos);
-  Log::Info["game.cc"] << "inside place_knight, player is " << player_index;
-  Player *player = get_player(player_index);
-  if (map->has_serf(cursor_pos)){
-    Log::Info["game.cc"] << "inside place_knight, there is already a serf at cursor_pos " << cursor_pos << "! returning";
-    return -1;
-  }
-  if (map->get_obj(cursor_pos) != Map::ObjectNone){
-    Log::Info["game.cc"] << "inside place_knight, there is already an object at cursor_pos " << cursor_pos << "! returning";
-    return -1;
-  }
-  int serf_index = -1;
-  MapPos place_pos = cursor_pos;
-  bool zigzag = player_index;
-  int knights_placed = 0;
-
-  // find a knight with State::IdleInStock in an Inventory...
-  for (Serf *serf : get_player_serfs(player)) {
-    if (serf->get_type() < Serf::TypeKnight0 || serf->get_type() > Serf::TypeKnight4)
+  for (unsigned int player_index = 0; player_index < 2; player_index++) {
+    Log::Info["game.cc"] << "inside place_knight, player is " << player_index;
+    Player *player = get_player(player_index);
+    bool zigzag = player_index;
+    int knights_placed = 0;
+    MapPos place_pos = bad_map_pos;
+    int leader = -1;
+    // skip invalid positions
+    if (map->has_serf(cursor_pos)){
+      Log::Info["game.cc"] << "inside place_knight, there is already a serf at cursor_pos " << cursor_pos << "! returning";
       continue;
-    if (serf->get_state() != Serf::StateIdleInStock)
-      continue;
-    serf_index = serf->get_index();
-    Log::Info["game.cc"] << "inside place_knight, found an idle-in-Inv serf of type " << NameSerf[serf->get_type()] << ", index " << serf_index << ", serf->pos " << serf->get_pos();
-    
-    
-    serf->debug_set_pos(place_pos);
-    serf->set_serf_state(Serf::StateKnightFreeWalking);
-    serf_index = serf->get_index();
-    map->set_serf_index(place_pos, serf_index);
-
-    // target pos for now is, "the pos XX tiles to the left/right"
-    MapPos target_pos = bad_map_pos;
-    if (player_index == 0)
-      target_pos = map->move_right_n(place_pos, 12);
-    if (player_index == 1)
-      target_pos = map->move_left_n(place_pos, 12);
-
-    serf->debug_set_knight_fight_dest(target_pos);
-
-    Log::Info["game.cc"] << "inside place_knight, successfully placed knight at cursor_pos " << place_pos;
-    //break;
-    // instead of one, do a column of serfs...
-    knights_placed++;
-    if (knights_placed >= 5){
-      break;
-      Log::Info["game.cc"] << "inside place_knight, successfully placed column of knights, done";
     }
-    //  moving downward from the clicked pos in a zigzag DownRight-DownLeft...
-    if (zigzag){
-      place_pos = map->move_down_right(place_pos);
-      zigzag = 0;
-    }else{
-      place_pos = map->move_down(place_pos);
-      zigzag = 1;
+    if (map->get_obj(cursor_pos) != Map::ObjectNone){
+      Log::Info["game.cc"] << "inside place_knight, there is already an object at cursor_pos " << cursor_pos << "! returning";
+      continue;
+    }
+    Direction march_dir = DirectionNone;
+    int target_col = bad_score;
+    // place the columns 12 tiles apart (6 left or right of cursor pos)
+    if (player_index == 0) {
+      place_pos = map->move_left_n(cursor_pos, 1);
+      march_dir = DirectionRight;
+      target_col = map->pos_col(map->move_right_n(cursor_pos, 10));
     }
 
-  }
-  
-  return serf_index;
+    if (player_index == 1) {
+      place_pos = map->move_right_n(cursor_pos, 2);
+      march_dir = DirectionLeft;
+      target_col = map->pos_col(map->move_left_n(cursor_pos, 10));
+    }
+
+    // find a knight with State::IdleInStock in an Inventory...
+    for (Serf *serf : get_player_serfs(player)) {
+      if (serf->get_type() < Serf::TypeKnight0 || serf->get_type() > Serf::TypeKnight4)
+        continue;
+      if (serf->get_state() != Serf::StateIdleInStock)
+        continue;
+      Log::Info["game.cc"] << "inside place_knight, found an idle-in-Inv serf of type " << NameSerf[serf->get_type()];
+      
+      serf->debug_set_pos(place_pos);
+      //serf->set_serf_state(Serf::StateKnightFreeWalking);
+      serf->march(march_dir, target_col);
+      map->set_serf_index(place_pos, serf->get_index());
+      
+      // set leader
+      if (leader == -1){
+        // no leader, make this serf the leader
+        Log::Info["game.cc"] << "inside debug_place_knight, setting this serf to leader";
+        leader = serf->get_index();
+      }
+      serf->debug_set_leader(leader);
+
+      Log::Info["game.cc"] << "inside place_knight, successfully placed knight at place_pos " << place_pos;
+      //break;
+      // instead of one, do a column of serfs...
+      knights_placed++;
+      //if (knights_placed >= 5){
+        if (true){
+        break;
+        Log::Info["game.cc"] << "inside place_knight, successfully placed column of knights, done";
+      }
+      /*
+      //  moving downward from the clicked pos in a zigzag DownRight-DownLeft...
+      if (zigzag){
+      //if (false){
+        place_pos = map->move_down_right(place_pos);
+        zigzag = 0;
+      }else{
+        place_pos = map->move_down(place_pos);
+        zigzag = 1;
+      }
+      */
+    }
+  }  
 }
 
 /*

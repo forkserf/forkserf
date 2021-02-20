@@ -156,7 +156,10 @@ class Serf : public GameObject {
      original save game. */
     StateKnightAttackingDefeatFree,
     StateWaitForBoat,   // to support AIPlusOption::CanTransportSerfsInBoats
-    StateBoatPassenger  // to support AIPlusOption::CanTransportSerfsInBoats
+    StateBoatPassenger,  // to support AIPlusOption::CanTransportSerfsInBoats
+    StateKnightFieldMarching,  // to support field battles
+    StateKnightFieldAttacking,  // to support field battles
+    StateKnightFieldDefending,  // to support field battles
   } State;
 
  protected:
@@ -169,6 +172,9 @@ class Serf : public GameObject {
   uint16_t tick;
   State state;
 
+ public:
+  // moving this whole damned union s to public so
+  //  I don't have to keep writing get/set functions to access its vars
   union s {
     struct {
       unsigned int inv_index; /* E */
@@ -264,7 +270,36 @@ class Serf : public GameObject {
       int neg_dist1; /* D */
       int neg_dist2; /* E */
       int flags; /* F */
+      // adding support for field battles
+      //int leader;
+      //int command;
     } free_walking;
+
+    // adding support for field battles
+    /* States: marching */
+    struct {
+      int dir;
+      int target_col;
+      int leader;
+      int command;
+    } field_marching;
+
+    struct {
+      int dir;
+      int target_col;
+      int leader;
+      int command;
+      int attacker_index;
+      int attacker_counter;  // this is the slope-adjusted counter, the time it takes for the attacking serf to reach the defender's "zero" pos
+    } field_defending;
+
+    struct {
+      int dir;
+      int target_col;
+      int leader;
+      int command;
+      int defender_index;
+    } field_attacking;
 
     /* No state data: planning_logging,
        planning_planting, planning_stonecutting */
@@ -384,7 +419,6 @@ class Serf : public GameObject {
     } defending;
   } s;
 
- public:
   Serf(Game *game, unsigned int index);
 
   unsigned int get_owner() const { return owner; }
@@ -394,7 +428,13 @@ class Serf : public GameObject {
   void set_type(Type type);
   void set_serf_state(Serf::State state);
   void debug_set_pos(MapPos pos);
-  void debug_set_knight_fight_dest(MapPos target_pos);
+  void march(Direction dir, int target_col);
+  //void debug_set_knight_fight_dest(MapPos target_pos);
+  void debug_set_leader(int);
+  int debug_get_leader();
+  void debug_set_command(int);
+  int debug_get_command();
+  void debug_set_walking_dir(int d){ s.walking.dir = d; }
 
   bool playing_sfx() const { return sound; }
   void start_playing_sfx() { sound = true; }
@@ -592,6 +632,9 @@ class Serf : public GameObject {
   void handle_serf_defending_castle_state();
   void handle_serf_wait_for_boat_state();
   void handle_serf_boat_passenger_state();
+  void handle_knight_field_marching_state();
+  void handle_knight_field_attacking_state();
+  void handle_knight_field_defending_state();
 };
 
 #endif  // SRC_SERF_H_

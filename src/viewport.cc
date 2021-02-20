@@ -2058,6 +2058,26 @@ Viewport::draw_active_serf(Serf *serf, MapPos pos, int x_base, int y_base) {
         if (draw_boat_dropoff){ draw_row_serf(dropoff_x, dropoff_y, true, color, dropoff_body);}
       }
 
+      // add support for field battles
+      //
+    /*
+      // if this serf's leader index it itself, it is the leader, color it differently
+    } else if (serf->get_type() >= Serf::TypeKnight0 && serf->get_type() <= Serf::TypeKnight4
+            && serf->debug_get_leader() == serf->get_index()) {
+      Log::Info["viewport.cc"] << "inside draw_active_serf, this knight of type " << NameSerf[serf->get_type()] << " is a leader, coloring";
+      //Color color = interface->get_player_color(serf->get_owner());
+      //draw_row_serf(lx, ly, true, color, body);
+      if (serf->get_owner() == 0){
+        draw_row_serf(lx, ly, true, Color::blue, body);
+      }else{
+        draw_row_serf(lx, ly, true, Color::gold, body);
+      }
+    */
+    /*
+    } else if (serf->get_state() == Serf::StateKnightMarching && serf->get_animation() >= 147 && serf->get_animation() <= 156){
+      Log::Info["viewport.cc"] << "inside draw_active_serf, serf is attacking";
+      draw_row_serf(lx + 16, ly, true, color, body);
+    */
     } else {
       //
       // **** draw any normal serf as usual ****
@@ -2069,8 +2089,10 @@ Viewport::draw_active_serf(Serf *serf, MapPos pos, int x_base, int y_base) {
     // 'g' Freeserf debug grid showing map lines and serf states/info
     //
     if (layers & Layer::LayerGrid) {
-      frame->draw_number(lx, ly, serf->get_index(), Color(0, 0, 128));
-      frame->draw_string(lx, ly + 8, serf->print_state(),  Color(0, 0, 128));
+      frame->draw_number(lx, ly, serf->get_pos(), Color(0, 0, 128));
+      frame->draw_number(lx, ly + 8, serf->get_counter(), Color(0, 0, 128));
+      //frame->draw_number(lx, ly, serf->get_index(), Color(0, 0, 128));
+      //frame->draw_string(lx, ly + 8, serf->print_state(),  Color(0, 0, 128));
     }
     
     //
@@ -2209,6 +2231,73 @@ Viewport::draw_active_serf(Serf *serf, MapPos pos, int x_base, int y_base) {
       }
     }
   }
+
+  // adding support for field battles
+  // Draw additional serf
+  if (serf->get_state() == Serf::StateKnightFieldDefending) {
+    int index = serf->s.field_defending.attacker_index;
+    if (index != 0) {
+      Serf *att_serf = interface->get_game()->get_serf(index);
+
+      Data::Animation animation = data_source->get_animation(att_serf->get_animation(), att_serf->get_counter());
+      if (serf->s.field_defending.dir == DirectionLeft){
+        Log::Info["viewport.cc"] << "inside draw_active_serf draw additional serf";
+        int lx = x_base + animation.x;
+        // something is wrong with the height of the attacking serf
+        int ly = y_base + animation.y - 4 * map->get_height(pos);
+        // int ly = y_base + animation.y - 4 * map->get_height(map->move_left(pos));  this doesn't fix it
+        int body = serf_get_body(att_serf);
+      
+        if (body > -1) {
+          Color color = interface->get_player_color(att_serf->get_owner());
+          draw_row_serf(lx, ly, true, color, body);
+        }
+      }else{
+        int lx = x_base + animation.x + 20;
+        // something is wrong with the height of the attacking serf
+        int ly = y_base + animation.y - 4 * map->get_height(pos);
+        // int ly = y_base + animation.y - 4 * map->get_height(map->move_left(pos));  this doesn't fix it
+        int body = serf_get_body(att_serf);
+      
+        if (body > -1) {
+          Color color = interface->get_player_color(att_serf->get_owner());
+          draw_row_serf(lx, ly, true, color, body);
+        }
+      }
+    }
+
+  }
+
+// what extra objects????
+/*
+  // Draw extra objects for fight 
+  if ((serf->get_state() == Serf::StateKnightAttacking ||
+       serf->get_state() == Serf::StateKnightAttackingFree) &&
+      animation.sprite >= 0x80 && animation.sprite < 0xc0) {
+    int index = serf->get_attacking_def_index();
+    if (index != 0) {
+      Serf *def_serf = interface->get_game()->get_serf(index);
+
+      if (serf->get_animation() >= 146 && serf->get_animation() < 156) {
+        if ((serf->get_attacking_field_D() == 0 ||
+             serf->get_attacking_field_D() == 4) &&
+            serf->get_counter() < 32) {
+          int anim = -1;
+          if (serf->get_attacking_field_D() == 0) {
+            anim = serf->get_animation() - 147;
+          } else {
+            anim = def_serf->get_animation() - 147;
+          }
+
+          int sprite = 198 + ((serf->get_counter() >> 3) ^ 3);
+          draw_game_sprite(lx + arr_4[2*anim], ly - arr_4[2*anim+1], sprite);
+        }
+      }
+    }
+  }
+*/
+
+
 }
 
 

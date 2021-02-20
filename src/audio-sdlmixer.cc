@@ -75,7 +75,9 @@ AudioSDL::AudioSDL() {
     throw ExceptionSDLmixer("Could not init SDL_mixer");
   }
 
+/*
   r = Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 512);
+  
   if (r < 0) {
     throw ExceptionSDLmixer("Could not open audio device");
   }
@@ -84,12 +86,13 @@ AudioSDL::AudioSDL() {
   if (r != 128) {
     throw ExceptionSDLmixer("Failed to allocate channels");
   }
+  
 
   volume = 1.f;
 
   sfx_player = std::make_shared<AudioSDL::PlayerSFX>();
   midi_player = std::make_shared<AudioSDL::PlayerMIDI>();
-
+*/
   Log::Info["audio:SDL_mixer"] << "Initialized";
 }
 
