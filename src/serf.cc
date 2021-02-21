@@ -7308,11 +7308,12 @@ Serf::handle_knight_field_marching_state() {
     //if (this_serf_col > other_serf_col || (this_serf_col == other_serf_col && this->counter < serf->counter)){
 
     
-    if (this_serf_col > other_serf_col){
+    if (s.field_marching.dir == DirectionRight && this_serf_col > other_serf_col ||
+        s.field_marching.dir == DirectionLeft  && this_serf_col < other_serf_col ){
       // this serf is a col ahead of any other serf, slow it down
       s.field_marching.slow = 1;
       //Log::Info["serf.cc"] << "inside handle_knight_field_marching_state, this serf at col " << this_serf_col << ", another serf is at col " << other_serf_col << ", slowing down this serf";
-    }else if (this_serf_col < other_serf_col){ 
+    //}else if (this_serf_col < other_serf_col){ 
       // never slow down a serf who is alread a col behind any other serf
       //  just do nothing, and "slow" will remain 0
       //s.field_marching.slow = 0;
@@ -7320,15 +7321,17 @@ Serf::handle_knight_field_marching_state() {
     }else if (this_serf_col == other_serf_col){
       // if this serf is in the front col, and farther ahead than any other serf within that col, slow it down
       // TODO - make this below a "get_remaining" type function
-      int other_max_animation = get_walking_animation(map->get_height(map->move_left(serf->get_pos())) -
-                                    map->get_height(serf->get_pos()),
-                                    DirectionRight, 1);
+      int other_max_animation = get_walking_animation(
+                                  map->get_height(map->move(serf->get_pos(), reverse_direction(Direction(serf->s.field_marching.dir)))) -
+                                  map->get_height(serf->get_pos()),
+                                  Direction(serf->s.field_marching.dir), 1);
       int other_max_counter = counter_from_animation[other_max_animation];
       double other_serf_remaining =  double(serf->counter) / double(other_max_counter) ;
 
-      int this_max_animation = get_walking_animation(map->get_height(map->move_left(this->get_pos())) -
-                                    map->get_height(this->get_pos()),
-                                    DirectionRight, 1);
+      int this_max_animation = get_walking_animation(
+                                  map->get_height(map->move(this->get_pos(), reverse_direction(Direction(this->s.field_marching.dir)))) -
+                                  map->get_height(this->get_pos()),
+                                  Direction(this->s.field_marching.dir), 1);
       int this_max_counter = counter_from_animation[this_max_animation];                             
       double this_serf_remaining =  double(this->counter) / double(this_max_counter) ;
       if (this_serf_remaining < other_serf_remaining){

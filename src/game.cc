@@ -3086,7 +3086,7 @@ Game::debug_place_knight(MapPos cursor_pos) {
         zigzag = 1;
       }
     }
-    break;  // only do 1 player for now
+    //break;  // only do 1 player for now
   }  
 }
 
