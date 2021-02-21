@@ -3026,13 +3026,23 @@ Game::debug_place_knight(MapPos cursor_pos) {
     int target_col = bad_score;
     // place the columns 12 tiles apart (6 left or right of cursor pos)
     if (player_index == 0) {
-      place_pos = map->move_left_n(cursor_pos, 1);
+      //place_pos = map->move_left_n(cursor_pos, 1);
+      place_pos = map->move_left(cursor_pos);
+      place_pos = map->move_left(place_pos);
+      place_pos = map->move_left(place_pos);
+      place_pos = map->move_left(place_pos);
+      place_pos = map->move_left(place_pos);
       march_dir = DirectionRight;
       target_col = map->pos_col(map->move_right_n(cursor_pos, 10));
     }
 
     if (player_index == 1) {
-      place_pos = map->move_right_n(cursor_pos, 2);
+      //place_pos = map->move_right_n(cursor_pos, 2);
+      place_pos = map->move_right(cursor_pos);
+      place_pos = map->move_right(place_pos);
+      place_pos = map->move_right(place_pos);
+      place_pos = map->move_right(place_pos);
+      place_pos = map->move_right(place_pos);
       march_dir = DirectionLeft;
       target_col = map->pos_col(map->move_left_n(cursor_pos, 10));
     }
@@ -3062,12 +3072,10 @@ Game::debug_place_knight(MapPos cursor_pos) {
       //break;
       // instead of one, do a column of serfs...
       knights_placed++;
-      //if (knights_placed >= 5){
-        if (true){
+      if (knights_placed >= 15){
         break;
         Log::Info["game.cc"] << "inside place_knight, successfully placed column of knights, done";
       }
-      /*
       //  moving downward from the clicked pos in a zigzag DownRight-DownLeft...
       if (zigzag){
       //if (false){
@@ -3077,8 +3085,8 @@ Game::debug_place_knight(MapPos cursor_pos) {
         place_pos = map->move_down(place_pos);
         zigzag = 1;
       }
-      */
     }
+    break;  // only do 1 player for now
   }  
 }
 

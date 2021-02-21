@@ -1368,7 +1368,7 @@ Serf::change_direction(Direction dir, int alt_end) {
       /* Wait for other serf */
       animation = 81 + dir;
       counter = counter_from_animation[animation];
-      s.walking.dir = dir-6;
+      s.walking.dir = dir-6;  // is dir - 6 a way of "setting -1" but remembering the original dir so it can be retrieved?
       return;
     }
   }
@@ -7272,7 +7272,79 @@ Serf::handle_knight_field_marching_state() {
   Log::Info["serf.cc"] << "inside handle_knight_field_marching_state";
   uint16_t delta = game->get_tick() - tick;
   tick = game->get_tick();
-  counter -= delta;
+  PMap map = game->get_map();
+
+
+  // try to maintain unit cohesion by slowing down any knights that are on steeper terrain
+  //  try doing this by having all knights use the slowest knight's speed (use that knights counter value)
+  // here's the steepness values from downhill, to flat, to uphill:
+  //    511, 447, 383, 319, 255, 319, 511, 767, 1023
+  
+  // first find the other serfs in the unit.  For now iterate over all serfs and find ones with the same leader
+  //  but I think the serf indexes should be stored in an array at some point
+  s.field_marching.slow = 0;
+  for (Serf *serf : game->get_player_serfs(game->get_player(get_owner()))){
+    if (this->get_index() == serf->get_index())
+      continue;
+    if (this->get_owner() != serf->get_owner())
+      continue;
+    if (serf->get_type() < Serf::TypeKnight0 || serf->get_type() > Serf::TypeKnight4)
+      continue;
+    if (serf->get_state() != Serf::StateKnightFieldMarching)
+      continue;
+    /*
+    if (serf->counter > this->counter){
+      Log::Info["serf.cc"] << "inside handle_knight_field_marching_state, slowing down this serf from " << counter << " to " << serf->counter;
+      // this doesn't wrok right, I need to figure out how to change walking speed to slow serfs down
+      //this->counter = serf->counter;
+      //this->counter += serf->counter - this->counter;
+      // INSTEAD try reducing the rate at which counter is decremented (by -delta) for serfs that need to be slowed down
+    }
+    */
+    //other_serf_pos = serf->get_pos();
+    int other_serf_col = map->pos_vert_col(serf->get_pos());
+    int this_serf_col = map->pos_vert_col(this->get_pos());
+    //if (this_serf_col > other_serf_col){
+    //if (this_serf_col > other_serf_col || (this_serf_col == other_serf_col && this->counter < serf->counter)){
+
+    
+    if (this_serf_col > other_serf_col){
+      // this serf is a col ahead of any other serf, slow it down
+      s.field_marching.slow = 1;
+      //Log::Info["serf.cc"] << "inside handle_knight_field_marching_state, this serf at col " << this_serf_col << ", another serf is at col " << other_serf_col << ", slowing down this serf";
+    }else if (this_serf_col < other_serf_col){ 
+      // never slow down a serf who is alread a col behind any other serf
+      //  just do nothing, and "slow" will remain 0
+      //s.field_marching.slow = 0;
+      //break;
+    }else if (this_serf_col == other_serf_col){
+      // if this serf is in the front col, and farther ahead than any other serf within that col, slow it down
+      // TODO - make this below a "get_remaining" type function
+      int other_max_animation = get_walking_animation(map->get_height(map->move_left(serf->get_pos())) -
+                                    map->get_height(serf->get_pos()),
+                                    DirectionRight, 1);
+      int other_max_counter = counter_from_animation[other_max_animation];
+      double other_serf_remaining =  double(serf->counter) / double(other_max_counter) ;
+
+      int this_max_animation = get_walking_animation(map->get_height(map->move_left(this->get_pos())) -
+                                    map->get_height(this->get_pos()),
+                                    DirectionRight, 1);
+      int this_max_counter = counter_from_animation[this_max_animation];                             
+      double this_serf_remaining =  double(this->counter) / double(this_max_counter) ;
+      if (this_serf_remaining < other_serf_remaining){
+        s.field_marching.slow = 1;
+        //Log::Info["serf.cc"] << "inside handle_knight_field_marching_state, this serf has remaining " << this_serf_remaining << ", other serf remaining " << other_serf_remaining << ", slowing down this serf";
+      }
+    }
+  }
+
+  if (s.field_marching.slow > 0){
+    //counter -= delta / 2;
+    counter--;
+  }else{
+    counter -= delta;
+  }
+
   while (counter < 0) {
 
     // idea - if an obstacle encountered, use the "go around / switch pos" animation to pass through it
@@ -7281,7 +7353,6 @@ Serf::handle_knight_field_marching_state() {
 
     // need to fight enemy in this dir
     Direction d = Direction(s.field_marching.dir);
-    PMap map = game->get_map();
     MapPos pos_ = map->move(pos, d);
 
     if (map->has_serf(pos_)) {
@@ -7293,6 +7364,8 @@ Serf::handle_knight_field_marching_state() {
         s.field_attacking.defender_index = other->get_index();
         s.field_attacking.dir = dir;
         counter = counter_from_animation[animation];
+        // the attacking Serf* believes its pos is the enemy pos, but the MAP doesn't have any record of the attacking serf
+        //pos = pos_;  // wait no this still doesn't work, messes up animation
 
         // empty the previous pos
         map->set_serf_index(pos, 0);
@@ -7308,9 +7381,27 @@ Serf::handle_knight_field_marching_state() {
       }
     }
     change_direction(Direction(s.field_marching.dir), 0);
+
     break;
   }
 }
+
+//----------------------------------------------------------------------------------
+/* here is how Serf::change_direction handles counter/animation/height for next pos
+animation = get_walking_animation(map->get_height(new_pos) -
+                                    map->get_height(pos),
+                                    (Direction)dir, 1);
+pos = new_pos;
+  map->set_serf_index(pos, get_index());
+  counter += counter_from_animation[animation];
+*/
+//----------------------------------------------------------------------------------
+
+
+// add some kind of fixed metric that converts a serf's animated location inside a pos
+//  to a double like 0.95 or a number of pixels from left to right, so that it does
+//   not have to be calculated from constantly changing 'counter' and 'animation' vals
+
 
 // knight enters an enemy pos and begins attacking
 void
@@ -7348,7 +7439,7 @@ Serf::handle_knight_field_defending_state() {
       if (other->counter < s.field_defending.attacker_counter * 0.40 ){  // this works pretty well on varied terrain but needs HEIGHT ADJUSTMENT for attacking serf Y axis
         // must check to ensure attacker hasn't already stopped, or his attack animations will never play
         //  because his counter keeps getting set to zero!
-        if (other->animation != 147){
+        if (other->animation != 147 && other->animation != 157){
           Log::Info["serf.cc"] << "inside handle_knight_field_defending_state, telling attacker to stop";
           other->counter = 0;
         }

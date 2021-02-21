@@ -325,8 +325,38 @@ class Map {
   unsigned int get_region_count() const { return regions; }
 
   // Extract col and row from MapPos
+  //  THESE COLUMNS APPEAR TO BE NE/SW DIAGONAL AND NOT VERTICAL AS MIGHT BE EXPECTED!
   int pos_col(MapPos pos) const { return geom_.pos_col(pos); }
   int pos_row(MapPos pos) const { return geom_.pos_row(pos); }
+  // this works - determine vertical column by adjusting the
+  //  given col by half the number of rows
+  //
+  //  THIS GIVES AN INCORRECT RESULT WHEN (col? row? either)  wraps around!!! find out why
+  //
+  int pos_vert_col(MapPos pos) {
+    int col = geom_.pos_col(pos);
+    // deal with rollovers by ofsetting each by half?
+    //  instead of this dumb code I think this should be an int with 64 values that rolls over
+    if (col < 32){
+      col += 32;
+    }else {
+      col -= 32;
+    }
+    int row = geom_.pos_row(pos);
+    if (row < 32){
+      row += 32;
+    }else{
+      row -= 32;
+    }
+    if (row % 2 != 0){
+      row++;
+    }
+    int vert_col = col - row / 2 ;
+    if (vert_col < 0){
+      //vert_col = vert_col * -1;
+    }
+    return vert_col;
+  }
 
   // Translate col, row coordinate to MapPos value. */
   MapPos pos(int x, int y) const { return geom_.pos(x, y); }
@@ -357,6 +387,7 @@ class Map {
   }
 
   // Shortest distance between map positions.
+  //  this also uses DIAGONAL NE/SW cols for x axis, not vertical cols
   int dist_x(MapPos pos1, MapPos pos2) const {
     return -geom_.dist_x(pos1, pos2); }
   int dist_y(MapPos pos1, MapPos pos2) const {

@@ -151,15 +151,12 @@ class Serf : public GameObject {
     StateScatter,
     StateFinishedBuilding,
     StateDefendingCastle, /* 75 */
-
-    /* Additional state: goes at the end to ease loading of
-     original save game. */
-    StateKnightAttackingDefeatFree,
-    StateWaitForBoat,   // to support AIPlusOption::CanTransportSerfsInBoats
-    StateBoatPassenger,  // to support AIPlusOption::CanTransportSerfsInBoats
-    StateKnightFieldMarching,  // to support field battles
-    StateKnightFieldAttacking,  // to support field battles
-    StateKnightFieldDefending,  // to support field battles
+    StateKnightAttackingDefeatFree,      // Additional state: goes at the end to ease loading of original save game.
+    StateWaitForBoat,                    // to support AIPlusOption::CanTransportSerfsInBoats
+    StateBoatPassenger,                  // to support AIPlusOption::CanTransportSerfsInBoats
+    StateKnightFieldMarching,            // to support field battles
+    StateKnightFieldAttacking, /* 80 */  // to support field battles
+    StateKnightFieldDefending,           // to support field battles
   } State;
 
  protected:
@@ -282,6 +279,7 @@ class Serf : public GameObject {
       int target_col;
       int leader;
       int command;
+      int slow;
     } field_marching;
 
     struct {

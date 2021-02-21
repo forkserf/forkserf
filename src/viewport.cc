@@ -2089,8 +2089,21 @@ Viewport::draw_active_serf(Serf *serf, MapPos pos, int x_base, int y_base) {
     // 'g' Freeserf debug grid showing map lines and serf states/info
     //
     if (layers & Layer::LayerGrid) {
-      frame->draw_number(lx, ly, serf->get_pos(), Color(0, 0, 128));
-      frame->draw_number(lx, ly + 8, serf->get_counter(), Color(0, 0, 128));
+      // my stuff
+      //frame->draw_number(lx, ly, serf->get_pos(), Color(0, 0, 128));
+      //frame->draw_number(lx, ly + 8, serf->get_counter(), Color(0, 0, 128));
+      //frame->draw_string(lx, ly - 8, serf->get_state_name(serf->get_state()),  Color(0, 0, 128));
+
+      frame->draw_string(lx, ly, std::to_string(map->pos_col(serf->get_pos())) + ", " + std::to_string(map->pos_row(serf->get_pos())), Color(0, 0, 128));
+      // find out why this gives bad result on map col/row wrap-around
+      frame->draw_number(lx, ly + 8, map->pos_vert_col(serf->get_pos()), Color(0, 0, 128));
+
+      //MapPos leader_pos = interface->get_game()->get_serf(serf->s.field_marching.leader)->get_pos();
+      //int leader_col = map->pos_col(leader_pos);
+      //int leader_dist = map->dist_x(serf->get_pos(), leader_pos);
+      //frame->draw_number(lx, ly + 8, leader_dist, Color(0, 0, 128));
+
+      // original stuff
       //frame->draw_number(lx, ly, serf->get_index(), Color(0, 0, 128));
       //frame->draw_string(lx, ly + 8, serf->print_state(),  Color(0, 0, 128));
     }
