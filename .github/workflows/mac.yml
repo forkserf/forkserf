@@ -1,0 +1,57 @@
+name: mac
+
+on:
+  pull_request:
+  push:
+  release:
+    types: published
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        buildtype: [ Debug, Release ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        run: |
+          brew install sdl2
+          brew install sdl2_mixer
+          brew install sdl2_image
+
+      - name: Configure ForkSerf
+        run: |
+          cmake -B build -G "Unix Makefiles"
+
+#      - name: Check style
+#        run: |
+#          cd build
+#          make check_style
+
+      - name: Build ForkSerf
+        run: |
+          cd build
+          make
+
+#      - name: Run Tests
+#        run: |
+#          cd build
+#          make test
+
+      - name: Pack ForkSerf
+        run: |
+          cd build
+          make package
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ForkSerf-${{ matrix.buildtype }}.dmg
+          path: ./build/ForkSerf.dmg
