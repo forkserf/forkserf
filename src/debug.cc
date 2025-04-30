@@ -21,6 +21,8 @@
 
 #include "src/debug.h"
 
+#include <string.h>
+
 ExceptionFreeserf::ExceptionFreeserf(const std::string &description_) throw()
   : description(description_) {
 }
@@ -30,7 +32,7 @@ ExceptionFreeserf::~ExceptionFreeserf() {
 
 const char*
 ExceptionFreeserf::what() const throw() {
-  return get_description().c_str();
+  return strdup(get_description().c_str());
 }
 
 std::string
