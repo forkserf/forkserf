@@ -1763,7 +1763,9 @@ Interface::handle_key_pressed(char key, int modifier) {
           open_popup(current_box_type);
           get_popup_box()->set_target_obj_index(next_inventory_index);
           // move up a bit so that the popup isn't blocking view of the Inventory building
-          viewport->move_by_pixels(0, -140);
+          Graphics &gfx = Graphics::get_instance();
+          float factor = gfx.get_zoom_factor();
+          viewport->move_by_pixels(0, -140 * factor);
         }
       }else{
         // no [other] inventory available
