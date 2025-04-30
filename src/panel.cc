@@ -349,6 +349,7 @@ PanelBar::button_click(int button) {
       if (interface->get_map_cursor_type() ==
           Interface::CursorTypeRemovableFlag) {
         interface->demolish_object();
+        interface->update_map_cursor_pos(interface->get_map_cursor_pos());
       } else {
         // if QuickDemo is enabled skip the "are you sure?" confirmation for *incomplete* buildings
         if (option_QuickDemoEmptyBuildSites && interface->get_map_cursor_type() == Interface::CursorTypeBuilding) {
@@ -360,6 +361,7 @@ PanelBar::button_click(int button) {
           if (!building->is_done()){
             Log::Debug["panel.cc"] << "inside PanelBar::button_click for ButtonDestroy, option_QuickDemoEmptyBuildSites is true and this is an unfinished building at pos " << interface->get_map_cursor_pos() << ", not showing confirmation popup";
             interface->demolish_object();
+            interface->update_map_cursor_pos(interface->get_map_cursor_pos()); // This does for some odd reason not work
             break;
           }
         }
@@ -381,9 +383,9 @@ PanelBar::button_click(int button) {
                                                        interface->get_player());
       if (!r) {
         play_sound(Audio::TypeSfxNotAccepted);
-        interface->update_map_cursor_pos(interface->get_map_cursor_pos());
       } else {
         play_sound(Audio::TypeSfxAccepted);
+        interface->update_map_cursor_pos(interface->get_map_cursor_pos());
       }
     }
       break;
