@@ -4749,9 +4749,12 @@ Viewport::move_to_map_pos(MapPos pos) {
   int map_width = map->get_cols()*MAP_TILE_WIDTH;
   int map_height = map->get_rows()*MAP_TILE_HEIGHT;
 
+  Graphics &gfx = Graphics::get_instance();
+  float factor = gfx.get_zoom_factor();
+
   /* Center screen. */
-  mx -= width/2;
-  my -= height/2;
+  mx -= width * factor / 2;
+  my -= height * factor / 2;
 
   if (my < 0) {
     mx -= (map->get_rows()*MAP_TILE_WIDTH)/2;
