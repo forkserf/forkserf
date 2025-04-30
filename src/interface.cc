@@ -50,7 +50,7 @@
 // Interval between automatic save games
 //#define AUTOSAVE_INTERVAL  (5*60*TICKS_PER_SEC)  // this is reasonable for normal play
 //#define AUTOSAVE_INTERVAL  (1*60*TICKS_PER_SEC)  // much higher frequency, for debugging
-//#define AUTOSAVE_INTERVAL  (1*10*1000/tick_length)  // outageously high, for testing
+//#define AUTOSAVE_INTERVAL  (1*10*1000/tick_length)  // outrageously high, for testing
 #define AUTOSAVE_INTERVAL  (5*60*1000/tick_length)  // this is reasonable for normal play
 
 Interface::Interface()
@@ -1511,7 +1511,7 @@ Interface::handle_key_pressed(char key, int modifier) {
       break;
     }
 
-    // Hidden Resources (Minerals/Fish) overlay grid - colored dots showing otherwise invisible map resoureces
+    // Hidden Resources (Minerals/Fish) overlay grid - colored dots showing otherwise invisible map resources
     case 'h': {
       Log::Info["interface"] << "'h' key pressed, toggling LayerHiddenResources";
       viewport->switch_layer(Viewport::LayerHiddenResources);

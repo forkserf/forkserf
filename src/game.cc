@@ -819,9 +819,9 @@ Game::send_serf_to_flag_search_cb(Flag *flag, void *d) {
 
 // Dispatch a non-road-transporter serf from the nearest
 //  *capable* inventory to flags/buildings.  Includes both
-//  knights and specialized/professioal serfs that may require
+//  knights and specialized/professional serfs that may require
 //  tools.  
-// Creates a new specialist/professioal serf or knight if necessary,
+// Creates a new specialist/professional serf or knight if necessary,
 //  which will consume tools/weapons
 // Returns true if a serf was sent, false if it could not be sent
 //
@@ -831,7 +831,7 @@ Game::send_serf_to_flag_search_cb(Flag *flag, void *d) {
 // NOTE - this function is NOT used for calling transporters to roads, 
 //  if I create a new road I see a transporter sent and arrive but never see this called for it
 //  instead, it looks like Inventory->call_transporter is called
-// NOTE - specialize_serf and specialize_free_serf functios are NOT USED HERE
+// NOTE - specialize_serf and specialize_free_serf functions are NOT USED HERE
 //  it seems those are only used during initial castle creation and when
 //  new knights are spawned inside the castle/stock/warehouse
 bool

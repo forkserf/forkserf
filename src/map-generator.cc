@@ -1001,7 +1001,7 @@ ClassicMapGenerator::pos_add_spirally_random(MapPos pos, int mask) {
    Each cluster has up to objs_in_cluster objects. The pos_mask is used in
    the call to pos_add_spirally_random to determine the max cluster size. The
    type_min and type_max determine the range (both inclusive) of terrain
-   types that must appear around a position to be elegible for placement of
+   types that must appear around a position to be eligible for placement of
    an object. The obj_base determines the first object type that can be placed
    and the obj_mask specifies a mask on a random integer that is added to the
    base to obtain the final object type.

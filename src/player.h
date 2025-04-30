@@ -196,7 +196,7 @@ class Player : public GameObject {
   bool has_message() const { return ((flags >> 3) & 1); }
   void drop_message() { flags &= ~BIT(3); }
   /* Whether the knight level of military buildings is temporarily
-   reduced bacause of cycling of the knights. */
+   reduced because of cycling of the knights. */
   bool reduced_knight_level() const { return ((flags >> 4) & 1); }
   /* Whether the cycling of knights is in the second phase. */
   bool cycling_second() const { return ((flags >> 5) & 1); }

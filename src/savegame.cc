@@ -744,7 +744,7 @@ GameStore::load(const std::string &path, Game *game) {
   } catch (ExceptionFreeserf& e) {
     file.close();
     Log::Warn["savegame"] << "Unable to load save game: " << e.what();
-    Log::Warn["savegame"] << "Trying compatability mode...";
+    Log::Warn["savegame"] << "Trying compatibility mode...";
     std::ifstream input(path.c_str(), std::ios::binary);
     std::vector<char> buffer((std::istreambuf_iterator<char>(input)),
                              (std::istreambuf_iterator<char>()));

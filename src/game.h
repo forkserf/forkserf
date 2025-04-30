@@ -192,7 +192,7 @@ class Game {
   void speed_reset();
 
   // hack function to allow Serf, Building to trigger game to flush the frame
-  //  so for option_FogOfWar so FoW cna be updated only when borders change
+  //  so for option_FogOfWar so FoW can be updated only when borders change
   void set_must_redraw_frame() { must_redraw_frame = true; }
   bool get_must_redraw_frame() { return must_redraw_frame; }
   void unset_must_redraw_frame() { must_redraw_frame = false; }
