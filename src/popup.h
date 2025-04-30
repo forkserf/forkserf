@@ -307,6 +307,9 @@ class PopupBox : public GuiObject {
 
   void handle_action(int action, int x, int y);
   int handle_clickmap(int x, int y, const int clkmap[]);
+  bool handle_dbl_click(int lx, int ly, Event::Button button) { return true; }
+  bool handle_special_click(int x, int y) { return true; }
+
   //bool handle_drag(int x, int y); // testing movable popup  // moved to public Viewport::layout can call it when screen is resized
   bool handle_mouse_button_down(int x, int y, Event::Button button); // testing movable popup
 
