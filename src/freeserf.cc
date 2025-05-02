@@ -20,10 +20,14 @@
  */
 
 #include "src/freeserf.h"
+#include "src/savegame.h"
 
 #include <string>
 #include <iostream>
 // #include <fstream>
+
+#include <dirent.h>
+#include <sys/stat.h>
 
 #include "src/log.h"
 #include "src/version.h"
@@ -93,6 +97,33 @@ main(int argc, char *argv[]) {
                 .add_parameter("FILE", [&save_file](std::istream& s) {
                   std::getline(s, save_file);
                   return true;
+                });
+  command_line.add_option('n', "Load newest game", [&save_file]() {
+                  GameStore *save_game = &GameStore::get_instance();
+                  std::string path = save_game->get_folder_path() + "/";
+                  DIR *dirp;
+                  dirp = opendir(path.c_str());
+                  dirent *dp;
+                  __time_t newestTime = 0;
+                  while ((dp = readdir(dirp)) != NULL) {
+                    struct stat info;
+                    std::string full_name = path + std::string(dp->d_name);
+
+                    if (stat(full_name.c_str(), &info) != 0) {
+                      continue;
+                    }
+
+                    if (info.st_mode & S_IFDIR) {
+                       continue;
+                    }
+
+                    if (newestTime < info.st_mtime) {
+                      newestTime = info.st_mtime;
+                      save_file = path + std::string(dp->d_name);
+                    }
+                  }
+                  closedir(dirp);
+                  Log::Info["freeserf.cc"] << "Newest saved game: " << save_file;
                 });
   command_line.add_option('r', "Set display resolution (e.g. 800x600)")
                 .add_parameter("RES",
