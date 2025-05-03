@@ -113,6 +113,7 @@ GameOptions::load_options_from_file(){
   option_ForesterMonoculture = meta_main->value("options", "forestermonoculture", option_ForesterMonoculture);
   option_SpinningAmigaStar = meta_main->value("options", "spinningamigastar", option_SpinningAmigaStar);
   option_HighMinerFoodConsumption = meta_main->value("options", "highminerfoodconsumption", option_HighMinerFoodConsumption);
+  option_KillVeryLostSerfs = meta_main->value("options", "killverylostserfs", option_KillVeryLostSerfs);
 
   mapgen_size = meta_main->value("mapgen", "size", mapgen_size);
   mapgen_trees = meta_main->value("mapgen", "trees", mapgen_trees);
@@ -170,6 +171,7 @@ GameOptions::save_options_to_file(){
   file << "ForesterMonoculture=" << option_ForesterMonoculture << "\n";
   file << "SpinningAmigaStar=" << option_SpinningAmigaStar << "\n";
   file << "HighMinerFoodConsumption=" << option_HighMinerFoodConsumption << "\n";
+  file << "KillVeryLostSerfs=" << option_KillVeryLostSerfs << "\n";
   
 
  /*

@@ -76,6 +76,7 @@ bool option_ForesterMonoculture = false;  // this looks bad in Spring and Winter
 bool option_CheckPathBeforeAttack = true;  // this is forced on
 bool option_SpinningAmigaStar = true;
 bool option_HighMinerFoodConsumption = false;
+bool option_KillVeryLostSerfs = false;
 
 // map generator settings
 /*
@@ -265,6 +266,7 @@ Game::reset_game_options_defaults() {
   option_CheckPathBeforeAttack = true;  // this is forced on
   option_SpinningAmigaStar = true;
   option_HighMinerFoodConsumption = false;
+  option_KillVeryLostSerfs = false;
 }
 
 /* Clear the serf request bit of all flags and buildings.

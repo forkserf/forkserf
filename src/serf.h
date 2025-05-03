@@ -29,6 +29,8 @@
 #include "src/resource.h"
 #include "src/objects.h"
 
+#define MAX_LIFE_COUNT 50000
+
 class Flag;
 class Inventory;
 class SaveReaderBinary;
@@ -188,6 +190,8 @@ class Serf : public GameObject {
   //   this variable then can be used to cross-check for missing serfs.  Currently it is very difficult to
   //   identify that a serf is missing if the game thinks he is still there
   //
+
+  int life_counter;
 
   union s {
     struct {

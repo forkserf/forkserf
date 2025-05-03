@@ -331,6 +331,7 @@ typedef enum Action {
   ACTION_GAME_OPTIONS_CheckPathBeforeAttack,
   ACTION_GAME_OPTIONS_SpinningAmigaStar,
   ACTION_GAME_OPTIONS_HighMinerFoodConsumption,
+  ACTION_GAME_OPTIONS_KillVeryLostSerfs,
   ACTION_MAPGEN_ADJUST_TREES,
   ACTION_MAPGEN_ADJUST_STONEPILES,
   ACTION_MAPGEN_ADJUST_FISH,
@@ -2239,6 +2240,8 @@ PopupBox::draw_game_options4_box() {
   draw_green_string(3, 105, "Amiga-Style Spinning Star");
   draw_popup_icon(1, 102, option_SpinningAmigaStar ? 288 : 220);
 */
+  draw_green_string(3, 29, "Kill very lost serfs");
+  draw_popup_icon(1, 26, option_KillVeryLostSerfs ? 288 : 220);
 
   draw_green_string(2, 131, "Reset");
   draw_popup_icon(0, 128, 295); // reset-to-defaults icon
@@ -4380,6 +4383,14 @@ PopupBox::handle_action(int action, int x_, int /*y_*/) {
     }
     GameOptions::get_instance().save_options_to_file();
     break;
+  case ACTION_GAME_OPTIONS_KillVeryLostSerfs:
+    if (option_KillVeryLostSerfs){
+      option_KillVeryLostSerfs = false;
+    } else{
+      option_KillVeryLostSerfs = true;
+    }
+    GameOptions::get_instance().save_options_to_file();
+    break;
   case ACTION_MAPGEN_ADJUST_TREES:
     Log::Info["popup"] << "ACTION_MAPGEN_ADJUST_TREES x_ = " << x_ << ", gui_get_slider_click_value(x_) = " << gui_get_slider_click_value(x_) << ", unint16_t(gui_get_slider_click_value(x_)) = " << uint16_t(gui_get_slider_click_value(x_));
     interface->set_custom_map_generator_trees(gui_get_slider_click_value(x_));         
@@ -4890,6 +4901,7 @@ PopupBox::handle_box_game_options4_clk(int cx, int cy) {
     //ACTION_GAME_OPTIONS_ForesterMonoculture, 7, 64, 150, 16,
     //ACTION_GAME_OPTIONS_CheckPathBeforeAttack, 7, 83, 150, 16,
     //ACTION_GAME_OPTIONS_SpinningAmigaStar, 7, 102, 150, 16,
+	ACTION_GAME_OPTIONS_KillVeryLostSerfs, 7, 26, 150, 16,
     ACTION_RESET_GAME_OPTIONS_DEFAULTS, 0, 126, 62, 16,  // click map the whole 'reset' text not just the button
     ActionShowOptions, 239, 126, 16, 16,  // flip button
     ACTION_CLOSE_OPTIONS, 255, 126, 16, 16, // exit button

@@ -4390,9 +4390,23 @@ Serf::handle_free_walking_common() {
 
 void
 Serf::handle_serf_free_walking_state() {
+  PMap map = game->get_map();
   uint16_t delta = game->get_tick() - tick;
   tick = game->get_tick();
   counter -= delta;
+
+  if (option_KillVeryLostSerfs && map->get_owner(pos) != owner && (get_type() < Serf::TypeKnight0 || get_type() > Serf::TypeKnight4)) {
+    life_counter--;
+    if (life_counter < 0) {
+      Log::Debug["serf.cc"] << "inside Serf::handle_serf_free_walking_state, SERF KILLED!!!!!! (index #" << this->get_index() << ", pos " << this->get_pos() << " and type " << NameSerf[this->get_type()] << ")";
+      set_type(TypeDead);
+      game->get_map()->set_serf_index(pos, 0);
+      game->delete_serf(this);
+      return ;
+    }
+  } else {
+	  life_counter = MAX_LIFE_COUNT;
+  }
 
   while (counter < 0) {
     handle_free_walking_common();
@@ -7317,6 +7331,8 @@ operator >> (SaveReaderBinary &reader, Serf &serf) {
   reader >> v8;  // 10
   serf.state = (Serf::State)v8;
 
+  serf.life_counter = MAX_LIFE_COUNT;
+
   Log::Verbose["savegame"] << "load serf " << serf.index << ": "
                            << Serf::get_state_name(serf.state);
 
@@ -7604,6 +7620,12 @@ operator >> (SaveReaderText &reader, Serf &serf) {
   reader.value("tick") >> serf.tick;
   reader.value("state") >> serf.state;
 
+  if (reader.has_value("life_counter")) {
+	  reader.value("life_counter") >> serf.life_counter;
+  } else {
+	  serf.life_counter = MAX_LIFE_COUNT;
+  }
+
   switch (serf.state) {
     case Serf::StateIdleInStock:
       reader.value("state.inventory") >> serf.s.idle_in_stock.inv_index;
@@ -7850,6 +7872,10 @@ operator << (SaveWriterText &writer, Serf &serf) {
   writer.value("pos") << serf.get_game()->get_map()->pos_row(serf.pos);
   writer.value("tick") << serf.tick;
   writer.value("state") << serf.state;
+
+  if (serf.life_counter != MAX_LIFE_COUNT && serf.state == Serf::StateFreeWalking) {
+	  writer.value("life_counter") << serf.life_counter;
+  }
 
   switch (serf.state) {
     case Serf::StateIdleInStock:
