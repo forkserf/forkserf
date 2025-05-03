@@ -7043,6 +7043,15 @@ Serf::update() {
 
   switch (state) {
   case StateNull: /* 0 */
+	  if (!option_LostTransportersClearFaster) {
+		  if (was_lost) {
+			  was_lost = false;
+		  }
+		  if (get_type() == Serf::TypeNone) {
+			  set_type(TypeGeneric);
+		  }
+		  set_lost_state();
+	  }
     break;
   case StateWalking:
     handle_serf_walking_state();
