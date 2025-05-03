@@ -1660,6 +1660,32 @@ static const int road_building_slope[] = {
 //  holder to true, before enter_building is called
 void
 Serf::enter_building(int field_B, int join_pos) {
+  Flag *flag = game->get_flag_at_pos(pos);
+  if (flag == nullptr) {
+    // Serf trying to enter a building without a flag. Something is seriously wrong.
+    set_lost_state();
+    return;
+  }
+
+  Building *building = flag->get_building();
+  if (building == nullptr) {
+    Log::Warn["serf.cc"] << "inside Serf::enter_building, serf with index #" << get_index() << " at pos " << get_pos() << " is trying to enter a building, but Building is unexpectedly a nullptr! setting serf to Lost";
+    //throw ExceptionFreeserf("inside Serf::enter_building, building is unexpectedly a nullptr!");
+    set_lost_state();
+    return;
+  }
+
+  if (building->is_burning()) {
+    set_lost_state();
+    return;
+  }
+
+  if (building->has_inventory() && building->get_inventory()->get_serf_mode() != Inventory::ModeIn) {
+    // Serf trying to enter a building with an inventory that doesn't accepts serfs
+    set_lost_state();
+    return;
+  }
+
   //Log::Debug["serf.cc"] << "inside Serf::enter_building, setting serf #" << get_index() << " state to StateEnteringBuilding";
   set_state(StateEnteringBuilding);
   //Log::Info["serf"] << "debug: inside enter_building, calling start_walking, join_pos = " << join_pos;
@@ -1670,13 +1696,6 @@ Serf::enter_building(int field_B, int join_pos) {
   //Log::Info["serf"] << "debug: inside enter_building, back from start_walking";
   if (join_pos) game->get_map()->set_serf_index(pos, get_index());
 
-  Building *building = game->get_building_at_pos(pos);
-  if (building == nullptr){
-    Log::Warn["serf.cc"] << "inside Serf::enter_building, serf with index #" << get_index() << " at pos " << get_pos() << " is trying to enter a building, but Building is unexpectedly a nullptr! setting serf to Lost";
-    //throw ExceptionFreeserf("inside Serf::enter_building, building is unexpectedly a nullptr!");
-    set_lost_state();
-    return;
-  }
   int slope = road_building_slope[building->get_type()];
   if (!building->is_done()) slope = 1;
   s.entering_building.slope_len = (slope * counter) >> 5;
@@ -2778,10 +2797,29 @@ Serf::handle_serf_entering_building_state() {
         map->set_serf_index(pos, 0);
 
         Building *building = game->get_building_at_pos(pos);
+        // Copied from enter_inventory() and modified
+        if (building == nullptr) {
+            set_lost_state();
+            break;
+        }
+
+        if (!building->has_inventory()) {
+            // TypeGeneric is trying to enter a building with no inventory and was_lost == false
+            set_lost_state();
+            break;
+        }
+
         Inventory *inventory = building->get_inventory();
         if (inventory == nullptr) {
           throw ExceptionFreeserf("Not inventory.");
         }
+
+        if (inventory->get_serf_mode() != Inventory::ModeIn) {
+            // TypeGeneric is trying to enter a building with an inventory that doesn't accepts serfs and was_lost == false
+            set_lost_state();
+            break;
+        }
+
         inventory->serf_come_back();
 
         set_state(StateIdleInStock);
@@ -4798,6 +4836,8 @@ Serf::handle_serf_lost_state() {
 
           if (option_LostTransportersClearFaster){
             was_lost = true;  // store this information so the handle_walking state and onward can allow the serf to clear from non-Inventory buildings
+          } else {
+			was_lost = false;
           }
 
           counter = 0;
