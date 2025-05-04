@@ -1742,32 +1742,35 @@ Building::update_castle() {
   Player *player = game->get_player(get_owner());
   if (player->get_castle_knights() == player->get_castle_knights_wanted()) {
     Serf *best_knight = NULL;
-    Serf *last_knight = NULL;
     unsigned int next_serf_index = holder_or_first_knight;
     while (next_serf_index != 0) {
       Serf *serf = game->get_serf(next_serf_index);
       if (serf == nullptr) {
         throw ExceptionFreeserf("Index of nonexistent serf in the queue.");
       }
-      if ((best_knight == NULL) || serf->get_type() < best_knight->get_type()) {
+      if ((best_knight == NULL) || serf->get_type() > best_knight->get_type()) {
         best_knight = serf;
       }
-      last_knight = serf;
       next_serf_index = serf->get_next();
     }
 
-    if (best_knight != nullptr) {
-      Serf::Type knight_type = best_knight->get_type();
-      for (int t = Serf::TypeKnight0; t <= Serf::TypeKnight4; t++) {
-        if (knight_type > t) {
-          inventory->call_internal(best_knight);
-        }
+    Serf::Type knight_type = Serf::TypeNone;
+    for (int t = Serf::TypeKnight0; t < Serf::TypeKnight4; t++) {
+      if (inventory->have_serf((Serf::Type)t)) {
+        knight_type = (Serf::Type)t;
+        break;
       }
+    }
 
-      /* Switch types */
-      Serf::Type tmp = best_knight->get_type();
-      best_knight->set_type(last_knight->get_type());
-      last_knight->set_type(tmp);
+    if (best_knight != nullptr && knight_type != Serf::TypeNone && best_knight->get_type() > knight_type) {
+      // Remove best_knight from defending list
+      best_knight->remove_from_defending_queue(holder_or_first_knight);
+
+	  best_knight->stay_idle_in_stock(inventory->get_index());
+
+      Serf *serf = inventory->call_internal(knight_type);
+      serf->add_to_defending_queue(holder_or_first_knight, true);
+      holder_or_first_knight = serf->get_index();
     }
   } else if (player->get_castle_knights() <
              player->get_castle_knights_wanted()) {
@@ -1940,23 +1943,7 @@ Building::update_military() {
 
     if (leaving_serf != NULL) {
       /* Remove leaving serf from list. */
-      if (leaving_serf->get_index() == holder_or_first_knight) {
-        holder_or_first_knight = leaving_serf->get_next();
-        //// store the building's index for bug detection
-        //Log::Debug["serf.cc"] << "inside Building::update_military, serf #" << serf->get_index() << " with serf type " << NameSerf[serf->get_type()] << " being set to Holder of building #" << this->get_index() << " of building type " << NameBuilding[this->get_type()];
-        //serf->set_building_held(this->get_index());
-      } else {
-        _serf_index = holder_or_first_knight;
-        while (_serf_index != 0) {
-          Serf *serf = game->get_serf(_serf_index);
-          if (serf->get_next() == leaving_serf->get_index()) {
-            serf->set_next(leaving_serf->get_next());
-            break;
-          }
-          _serf_index = serf->get_next();
-        }
-      }
-
+      leaving_serf->remove_from_defending_queue(holder_or_first_knight);
       /* Update serf state. */
       leaving_serf->go_out_from_building(0, 0, -2);
 

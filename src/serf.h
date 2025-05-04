@@ -436,6 +436,7 @@ class Serf : public GameObject {
   void set_lost_state();
 
   void add_to_defending_queue(unsigned int next_knight_index, bool pause);
+  void remove_from_defending_queue(unsigned int &holder_or_first_knight);
   void init_generic(Inventory *inventory);
   void init_inventory_transporter(Inventory *inventory);
   void reset_transport(Flag *flag);

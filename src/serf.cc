@@ -386,6 +386,28 @@ Serf::add_to_defending_queue(unsigned int next_knight_index, bool pause) {
   }
 }
 
+// Copied from Building::update_military() and modified
+// See similar code in Serf::extract_last_knight_from_list()
+void
+Serf::remove_from_defending_queue(unsigned int &holder_or_first_knight) {
+  if (get_index() == holder_or_first_knight) {
+    holder_or_first_knight = get_next();
+    //// store the building's index for bug detection
+    //Log::Debug["serf.cc"] << "inside Serf::remove_from_defending_queue, serf #" << serf->get_index() << " with serf type " << NameSerf[serf->get_type()] << " being set to Holder of building #" << this->get_index() << " of building type " << NameBuilding[this->get_type()];
+    //serf->set_building_held(this->get_index());
+  } else {
+    int _serf_index = holder_or_first_knight;
+    while (_serf_index != 0) {
+  	  Serf *serf = game->get_serf(_serf_index);
+	  if (serf->get_next() == get_index()) {
+	    serf->set_next(get_next());
+	    break;
+  	  }
+  	  _serf_index = serf->get_next();
+    }
+  }
+}
+
 void
 Serf::init_generic(Inventory *inventory) {
   //Log::Debug["serf"] << "inside init_generic, about to call set_type";
