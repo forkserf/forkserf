@@ -705,18 +705,22 @@ Frame::draw_string(int x, int y, const std::string &str, const Color &color,
 }
 
 /* Draw the number n at x, y in the dest frame. */
-void
+// Returns the number of characters drawn.
+int
 Frame::draw_number(int x, int y, int value, const Color &color,
                    const Color &shadow) {
+  int charactersDrawn = 0;
   if (value < 0) {
     draw_char_sprite(x, y, '-', color, shadow);
     x += 8;
     value *= -1;
+    charactersDrawn++;
   }
 
   if (value == 0) {
     draw_char_sprite(x, y, '0', color, shadow);
-    return;
+    charactersDrawn++;
+    return charactersDrawn;
   }
 
   int digits = 0;
@@ -724,8 +728,10 @@ Frame::draw_number(int x, int y, int value, const Color &color,
 
   for (int i = digits-1; i >= 0; i--) {
     draw_char_sprite(x+8*i, y, '0'+(value % 10), color, shadow);
+    charactersDrawn++;
     value /= 10;
   }
+  return charactersDrawn;
 }
 
 /* Draw a rectangle with color at x, y in the dest frame. */

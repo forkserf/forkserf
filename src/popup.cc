@@ -478,34 +478,42 @@ PopupBox::draw_green_string(int sx, int sy, const std::string &str) {
 /* Draw a green number in a popup frame.
    n must be non-negative. If > 999 simply draw three characters xxT or Mx thousands, xxM or Mx for millions, xxB for bilions. */
 // includes p1plp1's "millions and billions"... though likely only Thousands ever seen
-void
+// Returns the number of characters drawn.
+int
 PopupBox::draw_green_number(int sx, int sy, int n) {
+  int charactersDrawn = 0;
   if (n >= 1000000000) {
     /*billion*/
     int ntmp = n / 1000000000;
-    frame->draw_number(8 * sx + 8, 9 + sy, ntmp, Color::green);
-    frame->draw_string(8 * (sx + (ntmp < 10 ? 1 : 2)) + 8, sy + 9, "B", Color::green);
+    charactersDrawn += frame->draw_number(8 * sx + 8, 9 + sy, ntmp, Color::green);
+    frame->draw_string(8 * (sx + charactersDrawn) + 8, sy + 9, "B", Color::green);
+    charactersDrawn++;
   } else if (n >= 100000000) {
     int ntmp = n / 100000000;
     frame->draw_string(8 * sx + 8, sy + 9, "B", Color::green);
-    frame->draw_number(8 * (sx + 1) + 8, 9 + sy, ntmp, Color::green);
+    charactersDrawn++;
+    charactersDrawn += frame->draw_number(8 * (sx + charactersDrawn) + 8, 9 + sy, ntmp, Color::green);
   } else if (n >= 1000000) {
     /*million*/
     int ntmp = n / 1000000;
-    frame->draw_number(8 * sx + 8, 9 + sy, ntmp, Color::green);
-    frame->draw_string(8 * (sx + (ntmp < 10 ? 1 : 2)) + 8, sy + 9, "M", Color::green);
+    charactersDrawn += frame->draw_number(8 * sx + 8, 9 + sy, ntmp, Color::green);
+    frame->draw_string(8 * (sx + charactersDrawn) + 8, sy + 9, "M", Color::green);
+    charactersDrawn++;
   } else if (n >= 100000) {
     int ntmp =  n / 100000;
     frame->draw_string(8 * sx + 8, sy + 9, "M", Color::green);
-    frame->draw_number(8 * (sx + 1) + 8, 9 + sy, ntmp, Color::green);
+    charactersDrawn++;
+    charactersDrawn += frame->draw_number(8 * (sx + charactersDrawn) + 8, 9 + sy, ntmp, Color::green);
   } else if (n >= 1000) {
     /* thousand */
     int ntmp =  n / 1000;
-    frame->draw_number(8 * sx + 8, 9 + sy, ntmp, Color::green);
-    frame->draw_string(8 * (sx + (ntmp < 10 ? 1 : 2)) + 8, sy + 9, "k", Color::green);
+    charactersDrawn += frame->draw_number(8 * sx + 8, 9 + sy, ntmp, Color::green);
+    frame->draw_string(8 * (sx + charactersDrawn) + 8, sy + 9, "k", Color::green);
+    charactersDrawn++;
   } else {
-    frame->draw_number(8 * sx + 8, 9 + sy, n, Color::green);
+    charactersDrawn += frame->draw_number(8 * sx + 8, 9 + sy, n, Color::green);
   }
+  return charactersDrawn;
 }
 
 /* Draw a green number in a popup frame.
@@ -898,9 +906,9 @@ PopupBox::draw_stat_4_box() {
 void
 PopupBox::draw_building_count(int x_, int y_, int type) {
   Player *player = interface->get_player();
-  draw_green_number(x_, y_,
+  int charactersDrawn = draw_green_number(x_, y_,
              player->get_completed_building_count((Building::Type)type));
-  draw_additional_number(x_+1, y_,
+  draw_additional_number(x_ + charactersDrawn, y_,
              player->get_incomplete_building_count((Building::Type)type));
 }
 

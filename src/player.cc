@@ -1256,13 +1256,13 @@ operator >> (SaveReaderBinary &reader, Player &player)  {
   reader >> v8;  // 131
   player.build = v8;
 
-  for (int j = 0; j < 23; j++) {
+  for (int j = 0; j < 23; j++) { // This should not be 24 as Building::TypeNone is not loaded
     reader >> v16;  // 132
-    player.completed_building_count[j] = v16;
+    player.completed_building_count[j + 1] = v16; // The + 1 is because index 0 is Building::TypeNone, index 1 is Building::TypeFisher and so on
   }
-  for (int j = 0; j < 23; j++) {
+  for (int j = 0; j < 23; j++) { // See above
     reader >> v16;  // 178
-    player.incomplete_building_count[j] = v16;
+    player.incomplete_building_count[j + 1] = v16; // See above
   }
 
   for (int j = 0; j < 26; j++) {
@@ -1405,11 +1405,22 @@ operator >> (SaveReaderText &reader, Player &player) {
     reader.value("knight_occupation")[i] >> player.knight_occupation[i];
     reader.value("attacking_knights")[i] >> player.attacking_knights[i];
   }
-  for (int i = 0; i < 23; i++) {
+
+  int version = 0;
+  if (reader.has_value("version")) {
+	  reader.value("version") >> version;
+  }
+  // This is an attempt to fix incorrect saved game data.
+  // Index 0 should have been the number of Building::TypeFishers, but it was the number of Building::TypeNone.
+  // Note: The number of Building::TypeGoldSmelter was not saved in the saved game, and is therefore lost.
+  // This has been fixed in version == 1.
+  int start_index = version == 0 ? 1 : 0;
+  int offset = version == 0 ? 0 : 1;
+  for (int i = start_index; i < 23; i++) { // This should not be 24 as Building::TypeNone is not loaded
     reader.value("completed_building_count")[i] >>
-      player.completed_building_count[i];
+      player.completed_building_count[i + offset];
     reader.value("incomplete_building_count")[i] >>
-      player.incomplete_building_count[i];
+      player.incomplete_building_count[i + offset];
   }
   for (int i = 0; i < 64; i++) {
     reader.value("attacking_buildings")[i] >> player.attacking_buildings[i];
@@ -1474,7 +1485,9 @@ operator << (SaveWriterText &writer, Player &player) {
     writer.value("attacking_knights") << player.attacking_knights[i];
   }
 
-  for (int i = 0; i < 23; i++) {
+  // See comment in SaveReaderText& operator >> (SaveReaderText &reader, Player &player);
+  writer.value("version") << "1";
+  for (int i = Building::TypeFisher; i < Building::TypeCastle; i++) { // This should not be 0 (Building::TypeFisher == 1) as Building::TypeNone is not saved
     writer.value("completed_building_count") <<
       player.completed_building_count[i];
     writer.value("incomplete_building_count") <<

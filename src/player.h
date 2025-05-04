@@ -97,8 +97,8 @@ class Player : public GameObject {
   size_t face;
   int flags;
   int build;
-  int completed_building_count[24];
-  int incomplete_building_count[24];
+  int completed_building_count[24]; // This includes all the building types including Building::TypeNone, but it doesn't include the Building::TypeCastle!
+  int incomplete_building_count[24]; // See above.
   int inventory_prio[26];
   int attacking_buildings[64];
 

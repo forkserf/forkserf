@@ -160,7 +160,7 @@ class Frame {
   /* Text functions */
   void draw_string(int x, int y, const std::string &str, const Color &color,
                    const Color &shadow = Color::transparent);
-  void draw_number(int x, int y, int value, const Color &color,
+  int draw_number(int x, int y, int value, const Color &color,
                    const Color &shadow = Color::transparent);
 
   /* Frame functions */
