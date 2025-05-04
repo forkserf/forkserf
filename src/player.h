@@ -163,6 +163,13 @@ class Player : public GameObject {
   int player_stat_history[16][112];
   int resource_count_history[26][120];
 
+  unsigned int number_of_running_sort_in_progress;
+  unsigned int last_game_tick_of_running_sort;
+  unsigned int running_sort_speed;
+  Building* running_sort_worst_knight_building;
+  Building* running_sort_best_knight_building;
+  Serf::Type running_sort_best_knight_type;
+  int running_sort_knight_score;
  public:
   // TODO(Digger): remove it to UI
   int building_attacked;
@@ -336,6 +343,18 @@ class Player : public GameObject {
   void set_wheat_pigfarm(int val) { wheat_pigfarm = val; }
   int get_wheat_mill() const { return wheat_mill; }
   void set_wheat_mill(int val) { wheat_mill = val; }
+
+  unsigned int get_number_of_running_sort_in_progress() const { return number_of_running_sort_in_progress; }
+  void set_number_of_running_sort_in_progress(unsigned int val) { number_of_running_sort_in_progress = val; }
+  unsigned int get_last_game_tick_of_running_sort() const { return last_game_tick_of_running_sort; }
+  bool is_running_sort_active_for_game_tick();
+  void set_last_game_tick_of_running_sort(unsigned int val) { last_game_tick_of_running_sort = val; }
+  unsigned int get_running_sort_speed() const { return running_sort_speed; }
+  void set_running_sort_speed(unsigned int val) { running_sort_speed = val; }
+
+  void get_running_sort_data(Building* &worst_knight_building, Building* &best_knight_building, Serf::Type &best_knight_type);
+  void set_running_sort_data(Building* worst_knight_building, Building* best_knight_building, Serf::Type best_knight_type, int knight_score);
+  void reset_running_sort_data();
 
   friend SaveReaderBinary&
     operator >> (SaveReaderBinary &reader, Player &player);

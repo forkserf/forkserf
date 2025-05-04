@@ -294,6 +294,9 @@ class Building : public GameObject {
 
   void update(unsigned int tick);
 
+  Serf::Type find_best_knight_type_available();
+  void execute_best_running_sort(Building* best_knight_building, Serf::Type best_knight_type);
+
   friend SaveReaderBinary&
     operator >> (SaveReaderBinary &reader, Building &building);
   friend SaveReaderText&
@@ -307,6 +310,9 @@ class Building : public GameObject {
   void update_unfinished_adv();
   void update_castle();
   void update_military();
+  void update_running_sort();
+  Serf *find_worst_knight_in_defending_queue(int &knight_score);
+  bool running_sort_active;
 
   void request_serf_if_needed();
 

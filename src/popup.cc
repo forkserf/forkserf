@@ -244,6 +244,7 @@ typedef enum Action {
   ACTION_SHOW_SETT_8,
   ACTION_SHOW_SETT_6,
   ACTION_SETT_8_ADJUST_RATE,
+  ACTION_SETT_8_ADJUST_RUNNING_SORT,
   ACTION_SETT_8_TRAIN_1,
   ACTION_SETT_8_TRAIN_5,
   ACTION_SETT_8_TRAIN_20,
@@ -3029,6 +3030,9 @@ PopupBox::draw_sett_8_box() {
 
   draw_green_large_number(6, 73, player->get_gold_deposited());
 
+  // Running sort gui
+  draw_slide_bar(8, 80, player->get_running_sort_speed());
+
   draw_green_number(6, 119, player->get_castle_knights_wanted());
   draw_green_number(6, 129, player->get_castle_knights());
 
@@ -4574,6 +4578,9 @@ PopupBox::handle_action(int action, int x_, int /*y_*/) {
   case ACTION_SETT_8_ADJUST_RATE:
     player->set_serf_to_knight_rate(gui_get_slider_click_value(x_));
     break;
+  case ACTION_SETT_8_ADJUST_RUNNING_SORT:
+	player->set_running_sort_speed(gui_get_slider_click_value(x_));
+    break;
   case ACTION_SETT_8_TRAIN_1:
     sett_8_train(1);
     break;
@@ -5413,6 +5420,8 @@ PopupBox::handle_sett_8_click(int cx, int cy) {
 
     ACTION_SETT_8_SET_COMBAT_MODE_WEAK, 48, 84, 16, 16,
     ACTION_SETT_8_SET_COMBAT_MODE_STRONG, 48, 100, 16, 16,
+
+	ACTION_SETT_8_ADJUST_RUNNING_SORT, 64, 80, 64, 8,
 
     ACTION_SETT_8_CYCLE, 80, 84, 32, 32,
 

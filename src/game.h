@@ -191,6 +191,11 @@ class Game {
   void speed_decrease();
   void speed_reset();
 
+  Serf::Type find_best_knight_type_available(Building *source_building, Building *&best_knight_building, Serf::Type minKnightType);
+ private:
+  static bool find_best_knight_available_cb(Flag *flag, void *data);
+ public:
+
   // hack function to allow Serf, Building to trigger game to flush the frame
   //  so for option_FogOfWar so FoW cna be updated only when borders change
   void set_must_redraw_frame() { must_redraw_frame = true; }

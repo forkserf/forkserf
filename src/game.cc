@@ -933,6 +933,12 @@ Game::send_geologist(Flag *dest) {
 void
 Game::update_buildings() {
   mutex_lock("Game::update_buildings");
+
+  // Reset running sort data before Building::update()
+  for (Player *player : players) {
+    player->reset_running_sort_data();
+  }
+
   Buildings blds(buildings);
   Buildings::Iterator i = blds.begin();
   while (i != blds.end()) {
@@ -940,7 +946,60 @@ Game::update_buildings() {
     ++i;
     building->update(tick);
   }
+
+  // Execute best running sort data after Building::update()
+  for (Player *player : players) {
+    Building* worst_knight_building;
+    Building* best_knight_building;
+    Serf::Type best_knight_type;
+    player->get_running_sort_data(worst_knight_building, best_knight_building, best_knight_type);
+
+    if (worst_knight_building != NULL) {
+      worst_knight_building->execute_best_running_sort(best_knight_building, best_knight_type);
+    }
+
+    if (player->is_running_sort_active_for_game_tick()) {
+      player->set_last_game_tick_of_running_sort(get_tick());
+    }
+  }
+
   mutex_unlock();
+}
+
+Serf::Type
+Game::find_best_knight_type_available(Building *source_building, Building *&best_knight_building, Serf::Type minKnightType) {
+  Flag *source_flag = get_flag(source_building->get_flag_index());
+  Buildings blds(buildings);
+  Buildings::Iterator i = blds.begin();
+  Serf::Type best_knight_type = Serf::TypeNone;
+  while (i != blds.end()) {
+    Building *destination_building = *i;
+    ++i;
+    Serf::Type building_best_knight_type = destination_building->find_best_knight_type_available();
+    if ((best_knight_type == Serf::TypeNone || best_knight_type < building_best_knight_type) && minKnightType < building_best_knight_type) {
+      bool pathFound = FlagSearch::single(source_flag, find_best_knight_available_cb, true, false, destination_building);
+      if (pathFound) {
+        best_knight_type = building_best_knight_type;
+        best_knight_building = destination_building;
+      }
+    }
+  }
+
+  return best_knight_type;
+}
+
+bool
+Game::find_best_knight_available_cb(Flag *flag, void *data) {
+  if (!flag->has_building()) {
+    return false;
+  }
+
+  Building* destination = reinterpret_cast<Building*>(data);
+  if (flag->get_building() != destination) {
+    return false;
+  }
+
+  return true;
 }
 
 /* Update serfs as part of the game progression. */

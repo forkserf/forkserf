@@ -161,6 +161,10 @@ Player::Player(Game* game, unsigned int index)
     serf_count[i] = 0;
   }
 
+  number_of_running_sort_in_progress = 0;
+  last_game_tick_of_running_sort = 0;
+  running_sort_speed = 0;
+
   /* TODO AI: Set array field_402 of length 25 to -1. */
   /* TODO AI: Set array field_434 of length 280*2 to 0 */
   /* TODO AI: Set array field_1bc of length 8 to -1 */
@@ -675,6 +679,35 @@ void
 Player::cycle_knights() {
   flags |= BIT(2) | BIT(4);
   knight_cycle_counter = 2400;
+}
+
+bool Player::is_running_sort_active_for_game_tick() {
+  unsigned int diff = game->get_tick() - get_last_game_tick_of_running_sort();
+  return diff > 1000;
+}
+
+void Player::reset_running_sort_data() {
+  running_sort_worst_knight_building = NULL;
+  running_sort_best_knight_building = NULL;
+  running_sort_best_knight_type = Serf::TypeNone;
+  running_sort_knight_score = -1;
+}
+
+void Player::get_running_sort_data(Building* &worst_knight_building, Building* &best_knight_building, Serf::Type &best_knight_type) {
+  worst_knight_building = running_sort_worst_knight_building;
+  best_knight_building = running_sort_best_knight_building;
+  best_knight_type = running_sort_best_knight_type;
+}
+
+void Player::set_running_sort_data(Building* worst_knight_building, Building* best_knight_building, Serf::Type best_knight_type, int knight_score) {
+  if (knight_score > running_sort_knight_score && running_sort_knight_score != - 1) {
+    return ;
+  }
+
+  running_sort_worst_knight_building = worst_knight_building;
+  running_sort_best_knight_building = best_knight_building;
+  running_sort_best_knight_type = best_knight_type;
+  running_sort_knight_score = knight_score;
 }
 
 void
@@ -1445,6 +1478,16 @@ operator >> (SaveReaderText &reader, Player &player) {
   reader.value("castle_knights") >> player.castle_knights;
   reader.value("castle_knights_wanted") >> player.castle_knights_wanted;
 
+  if (reader.has_value("number_of_running_sort_in_progress")) {
+    reader.value("number_of_running_sort_in_progress") >> player.number_of_running_sort_in_progress;
+  }
+  if (reader.has_value("last_game_tick_of_running_sort")) {
+    reader.value("last_game_tick_of_running_sort") >> player.last_game_tick_of_running_sort;
+  }
+  if (reader.has_value("running_sort_speed")) {
+    reader.value("running_sort_speed") >> player.running_sort_speed;
+  }
+
   return reader;
 }
 
@@ -1526,6 +1569,10 @@ operator << (SaveWriterText &writer, Player &player) {
 
   writer.value("castle_knights") << player.castle_knights;
   writer.value("castle_knights_wanted") << player.castle_knights_wanted;
+
+  writer.value("number_of_running_sort_in_progress") << player.number_of_running_sort_in_progress;
+  writer.value("last_game_tick_of_running_sort") << player.last_game_tick_of_running_sort;
+  writer.value("running_sort_speed") << player.running_sort_speed;
 
   return writer;
 }

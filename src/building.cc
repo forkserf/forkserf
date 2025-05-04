@@ -66,6 +66,8 @@ Building::Building(Game *game, unsigned int index)
 
   holder_or_first_knight = 0;
   burning_counter = 0;
+
+  running_sort_active = false;
 }
 
 typedef struct ConstructionInfo {
@@ -1964,6 +1966,8 @@ Building::update_military() {
     }
   }
 
+  update_running_sort();
+
   /* Request gold */
   if (holder) {
     int total_gold = stock[1].requested + stock[1].available;
@@ -1975,6 +1979,143 @@ Building::update_military() {
       stock[1].prio = 0;
     }
   }
+}
+
+void
+Building::update_running_sort() {
+  Player *player = game->get_player(get_owner());
+
+  if (running_sort_active && stock[0].requested == 0) {
+    running_sort_active = false;
+    player->set_number_of_running_sort_in_progress(player->get_number_of_running_sort_in_progress() - 1);
+  }
+
+  if (player->get_running_sort_speed() == 0) {
+    // Running sort is off
+    return ;
+  }
+
+  if (!player->is_running_sort_active_for_game_tick()) {
+    return ;
+  }
+
+  unsigned int limit_of_running_sort_in_progress = player->get_running_sort_speed() * 20 / 65500 /* Max slider value (not 65535)*/;
+  if (limit_of_running_sort_in_progress == 0 && player->get_running_sort_speed() > 0) {
+    limit_of_running_sort_in_progress = 1;
+  }
+
+  if (player->get_number_of_running_sort_in_progress() >= limit_of_running_sort_in_progress) {
+    return ;
+  }
+
+  if (stock[0].requested != 0) {
+    // One knight(s) is on it ways already => Don't sort
+    return ;
+  }
+
+  int knight_score = 0;
+  Serf* worst_knight = find_worst_knight_in_defending_queue(knight_score);
+  if (worst_knight == NULL) {
+    // Building is not defended yet / is empty
+    return ;
+  }
+
+  if (worst_knight->get_type() == Serf::TypeKnight4) {
+    // Already the best knight => Don't sort
+    return ;
+  }
+
+  Building* best_knight_building;
+  Serf::Type best_knight_type = game->find_best_knight_type_available(this, best_knight_building, worst_knight->get_type());
+  if (best_knight_type == Serf::TypeNone || best_knight_type <= worst_knight->get_type()) {
+    // No better knight available => Don't sort
+    return ;
+  }
+
+  // The swap of knights is not done now. It is saved for later execution.
+  // It is only saved if it is better that the current swap, to only do the best swap e.g. swap the worst knight in worst defended building.
+  // The execution of the swap is done in the execute_best_running_sort, that is executed when all the building.update()'s have been executed.
+  player->set_running_sort_data(this, best_knight_building, best_knight_type, knight_score);
+}
+
+void
+Building::execute_best_running_sort(Building* best_knight_building, Serf::Type best_knight_type) {
+  // "Over request" a knight of best_knight_type from the best_knight_building to avoid defenses being down while sorting knights.
+  Player *player = game->get_player(get_owner());
+  if (!best_knight_building->has_inventory()) {
+    throw ExceptionFreeserf("!!best_knight_building->has_inventory()");
+  }
+
+  Inventory* best_knight_inventory = best_knight_building->get_inventory();
+  if (!best_knight_inventory->have_serf(best_knight_type)) {
+    // Knight has disappeared. Properly because the knight was missing in a building, which is later in the list of buildings.
+    // The swap is not executed.
+    return ;
+  }
+
+  // Copied from Game::send_serf_to_flag_search_cb(Flag *flag, void *d) and modified
+  Serf* best_knight = best_knight_inventory->call_out_serf(best_knight_type);
+  if (best_knight == NULL) {
+    throw ExceptionFreeserf("best_knight == NULL");
+  }
+
+  knight_request_granted();
+  best_knight->go_out_from_inventory(best_knight_inventory->get_index(), get_flag_index(), -1);
+  player->set_number_of_running_sort_in_progress(player->get_number_of_running_sort_in_progress() + 1);
+  running_sort_active = true;
+}
+
+Serf*
+Building::find_worst_knight_in_defending_queue(int &knight_score) {
+  // Copied from Building::update_castle() and modified
+  Serf *worst_knight = NULL;
+  knight_score = 0;
+  unsigned int next_serf_index = holder_or_first_knight;
+  while (next_serf_index != 0) {
+    Serf *serf = game->get_serf(next_serf_index);
+    if (serf == nullptr) {
+      throw ExceptionFreeserf("Index of nonexistent serf in the queue.");
+    }
+    knight_score += (serf->get_type() - Serf::TypeKnight0) * (serf->get_type() - Serf::TypeKnight0);
+    if (worst_knight == NULL || serf->get_type() < worst_knight->get_type()) {
+      worst_knight = serf;
+    }
+    next_serf_index = serf->get_next();
+  }
+
+  if (worst_knight != NULL) {
+  // Is intentionally reserved to make a bad knight reduce the score a lot
+    knight_score -= (Serf::TypeKnight4 - worst_knight->get_type() + 2) * (Serf::TypeKnight4 - worst_knight->get_type() + 2);
+  }
+
+  return worst_knight;
+}
+
+Serf::Type
+Building::find_best_knight_type_available() {
+  if (constructing) {
+    return Serf::TypeNone;
+  }
+
+  if (get_type() != TypeStock && get_type() != TypeCastle) {
+    return Serf::TypeNone;
+  }
+
+  if (!has_inventory()) {
+    return Serf::TypeNone;
+  }
+
+  if (!is_active()) {
+    return Serf::TypeNone;
+  }
+
+  for (int knight_type = Serf::TypeKnight4; knight_type >= Serf::TypeKnight0; knight_type--) {
+    if (inventory->have_serf((Serf::Type)knight_type)) {
+      return (Serf::Type)knight_type;
+    }
+  }
+
+  return Serf::TypeNone;
 }
 
 int
@@ -2203,6 +2344,10 @@ operator >> (SaveReaderText &reader, Building &building) {
     reader.value("level") >> building.u.level;
   }
 
+  if (reader.has_value("running_sort_active")) {
+	  building.running_sort_active = true;
+  }
+
   return reader;
 }
 
@@ -2245,6 +2390,10 @@ operator << (SaveWriterText &writer, Building &building) {
     writer.value("tick") << building.u.tick;
   } else {
     writer.value("level") << building.u.level;
+  }
+
+  if (building.running_sort_active) {
+	writer.value("running_sort_active") << 1; // 1 = true
   }
 
   return writer;
