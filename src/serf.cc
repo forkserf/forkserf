@@ -5055,9 +5055,7 @@ Serf::handle_serf_mining_state() {
         /* Look for resource in ground. */
         MapPos dest = map->pos_add_spirally(pos,
                                             (game->random_int() >> 2) & 0x1f);
-        if ((map->get_obj(dest) == Map::ObjectNone ||
-             map->get_obj(dest) > Map::ObjectCastle) &&
-            map->get_res_type(dest) == s.mining.deposit &&
+        if (map->get_res_type(dest) == s.mining.deposit &&
             map->get_res_amount(dest) > 0) {
           /* Decrement resource count in ground. */
           map->remove_ground_deposit(dest, 1);
