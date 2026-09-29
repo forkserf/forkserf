@@ -3472,6 +3472,10 @@ operator >> (SaveReaderBinary &reader, Game &game) {
   game.init_land_ownership();
   if (option_FogOfWar){game.init_FogOfWar();}
 
+  // Validate map
+  PMap map = game.get_map();
+  map->validate_map();
+
   game.gold_total = game.map->get_gold_deposit();
 
   return reader;
@@ -3899,6 +3903,10 @@ operator >> (SaveReaderText &reader, Game &game) {
 
   game.init_land_ownership();
   if (option_FogOfWar){game.init_FogOfWar();}
+
+  // Validate map
+  PMap map = game.get_map();
+  map->validate_map();
 
   return reader;
 }

@@ -1572,6 +1572,45 @@ Map::pos_from_saved_value(uint32_t val) {
   return pos(x, y);
 }
 
+void
+Map::validate_map() {
+  int left;
+  int right;
+  int m;
+  for (unsigned int y = 0; y < get_rows(); y ++) {
+    for (unsigned int x = 0; x < get_cols(); x ++) {
+      MapPos pos = this->pos(x, y);
+
+      left = get_height(pos);
+      right = get_height(move_right(pos));
+
+      pos = move_down_right(pos);
+
+      m = get_height(pos);
+      Map::Terrain type_up = this->type_up(pos);
+      Map::Terrain type_down = this->type_down(pos);
+
+      if (((left - m) < -4) || ((left - m) > 4)) {
+        Log::Error["map.cc"] << "Failed to draw triangle up / down (1), left: " << left << ", m: " << m << ", type_up: " << type_up << ", type_down: " << type_down << " at " << pos;
+        if (m == 0) {
+          // Correcting "Failed to draw triangle up / down" bug
+          this->set_height(pos, (int)32);
+          Log::Error["map.cc"] << "   fixed";
+        }
+      }
+
+      if (((right - m) < -4) || ((right - m) > 4)) {
+        Log::Error["map.cc"] << "Failed to draw triangle up / down (2), right: " << right << ", m: " << m << ", type_up: " << type_up << ", type_down: " << type_down << " at " << pos;
+        if (m == 0) {
+          // Correcting "Failed to draw triangle up / down" bug
+          this->set_height(pos, (int)32);
+          Log::Error["map.cc"] << "   fixed";
+        }
+      }
+    }
+  }
+}
+
 #define SAVE_MAP_TILE_SIZE (16)
 
 SaveReaderText&
@@ -1593,7 +1632,10 @@ operator >> (SaveReaderText &reader, Map &map) {
       game_tile.paths = val & 0x3f;
 
       reader.value("height")[y*SAVE_MAP_TILE_SIZE+x] >> val;
-      landscape_tile.height = val & 0x1f;
+//      landscape_tile.height = val & 0x1f;
+      // Some mountain tops are 32. The "val & 0x1f" code will cause them to be changed to 0, which will cause the "Failed to draw triangle..." bug.
+      // I can't figure out what the maximum mountain/terrain height is. I assume it to be 32.
+      landscape_tile.height = std::min(val, (unsigned int)32);
 
       reader.value("type.up")[y*SAVE_MAP_TILE_SIZE+x] >> val;
       landscape_tile.type_up = (Map::Terrain)val;

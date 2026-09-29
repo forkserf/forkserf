@@ -760,6 +760,8 @@ GameInitBox::generate_map_preview() {
     map->init_tiles(generator);
   }
 
+  map->validate_map();
+
   minimap->set_map(map);
 
   set_redraw();

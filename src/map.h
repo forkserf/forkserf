@@ -456,6 +456,8 @@ class Map {
     return pos_add(pos_, directional_fill_pos_pattern[off+dir_offset]);
   }
 
+  void validate_map();
+
   // Shortest distance between map positions.
   int dist_x(MapPos pos1, MapPos pos2) const {
     return -geom_.dist_x(pos1, pos2); }
