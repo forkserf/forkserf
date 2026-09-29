@@ -1118,6 +1118,11 @@ void
 Serf::handle_serf_idle_in_stock_state() {
   Inventory *inventory = game->get_inventory(s.idle_in_stock.inv_index);
 
+  if (inventory == nullptr) {
+	  Log::Debug["serf"] << "Serf " << index << " is in missing inventory " << s.idle_in_stock.inv_index;
+	  return;
+  }
+
   if (inventory->get_serf_mode() == 0
       || inventory->get_serf_mode() == 1 /* in, stop */
       || inventory->get_serf_queue_length() >= 3) {
