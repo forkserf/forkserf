@@ -205,7 +205,8 @@ void
 Building::increase_mining(int res) {
   active = true;
 
-  if (progress == 0x8000) {
+  if (progress == 0x8000
+		  || (progress == 0 && threat_level == 15)) {  // See comment below. Hack to make empty mines that have never produced anything report empty. This will also causes a reissue of the notification after some time has passed.
     /* Handle empty mine. */
     Player *player = game->get_player(owner);
     if (player->is_ai()) {
@@ -213,6 +214,8 @@ Building::increase_mining(int res) {
     }
 
     player->add_notification(Message::TypeMineEmpty, pos, type - TypeStoneMine);
+
+    threat_level = 0; // Part of hack. See above.
   }
 
   progress = (progress << 1) & 0xffff;
