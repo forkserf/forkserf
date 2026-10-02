@@ -1411,6 +1411,8 @@ Interface::handle_key_pressed(char key, int modifier) {
       Audio::PPlayer splayer = audio.get_sound_player();
       if (splayer) {
         splayer->enable(!splayer->is_enabled());
+        option_SFX = splayer->is_enabled();
+        GameOptions::get_instance().save_options_to_file();
       }
       break;
     }
@@ -1422,6 +1424,8 @@ Interface::handle_key_pressed(char key, int modifier) {
       if (splayer) {
         Log::Debug["interface.cc"] << "music splayer exists, state is " << splayer->is_enabled();
         splayer->enable(!splayer->is_enabled());
+        option_Music = splayer->is_enabled();
+        GameOptions::get_instance().save_options_to_file();
       }
       break;
     }

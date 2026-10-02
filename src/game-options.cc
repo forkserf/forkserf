@@ -4,6 +4,8 @@
 #include "src/configfile.h"
 #include "src/log.h"
 
+#include "src/audio.h"
+
 #ifdef _WIN32
 #include <Windows.h>
 #include <Knownfolders.h>
@@ -114,6 +116,24 @@ GameOptions::load_options_from_file(){
   option_SpinningAmigaStar = meta_main->value("options", "spinningamigastar", option_SpinningAmigaStar);
   option_HighMinerFoodConsumption = meta_main->value("options", "highminerfoodconsumption", option_HighMinerFoodConsumption);
 
+  option_Music = meta_main->value("options", "music", option_Music);
+  option_SFX = meta_main->value("options", "sfx", option_SFX);
+  option_Volume = meta_main->value("options", "volume", option_Volume);
+
+  Audio &audio = Audio::get_instance();
+  Audio::PPlayer music_player = audio.get_music_player();
+  if (music_player) {
+    music_player->enable(option_Music);
+  }
+  Audio::PPlayer sound_player = audio.get_sound_player();
+  if (sound_player) {
+	  sound_player->enable(option_SFX);
+  }
+  Audio::VolumeController *volume_controller = audio.get_volume_controller();
+  if (volume_controller != nullptr) {
+    volume_controller->set_volume(option_Volume);
+  }
+
   mapgen_size = meta_main->value("mapgen", "size", mapgen_size);
   mapgen_trees = meta_main->value("mapgen", "trees", mapgen_trees);
   mapgen_stonepile_dense = meta_main->value("mapgen", "stonepiledense", mapgen_stonepile_dense);
@@ -171,6 +191,9 @@ GameOptions::save_options_to_file(){
   file << "SpinningAmigaStar=" << option_SpinningAmigaStar << "\n";
   file << "HighMinerFoodConsumption=" << option_HighMinerFoodConsumption << "\n";
   
+  file << "Music=" << option_Music << "\n";
+  file << "SFX=" << option_SFX << "\n";
+  file << "Volume=" << option_Volume << "\n";
 
  /*
   case ACTION_RESET_MAPGEN_DEFAULTS:

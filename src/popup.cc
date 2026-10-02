@@ -4681,6 +4681,8 @@ PopupBox::handle_action(int action, int x_, int /*y_*/) {
     Audio::PPlayer player = audio.get_music_player();
     if (player) {
       player->enable(!player->is_enabled());
+      option_Music = player->is_enabled();
+      GameOptions::get_instance().save_options_to_file();
     }
     play_sound(Audio::TypeSfxClick);
     break;
@@ -4690,6 +4692,8 @@ PopupBox::handle_action(int action, int x_, int /*y_*/) {
     Audio::PPlayer player = audio.get_sound_player();
     if (player) {
       player->enable(!player->is_enabled());
+      option_SFX = player->is_enabled();
+      GameOptions::get_instance().save_options_to_file();
     }
     play_sound(Audio::TypeSfxClick);
     break;
@@ -4704,6 +4708,8 @@ PopupBox::handle_action(int action, int x_, int /*y_*/) {
     Audio::VolumeController *volume_controller = audio.get_volume_controller();
     if (volume_controller != nullptr) {
       volume_controller->volume_down();
+      option_Volume = volume_controller->get_volume();
+      GameOptions::get_instance().save_options_to_file();
     }
     play_sound(Audio::TypeSfxClick);
     break;
@@ -4713,6 +4719,8 @@ PopupBox::handle_action(int action, int x_, int /*y_*/) {
     Audio::VolumeController *volume_controller = audio.get_volume_controller();
     if (volume_controller != nullptr) {
       volume_controller->volume_up();
+      option_Volume = volume_controller->get_volume();
+      GameOptions::get_instance().save_options_to_file();
     }
     play_sound(Audio::TypeSfxClick);
     break;

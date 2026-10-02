@@ -157,12 +157,15 @@ main(int argc, char *argv[]) {
         Log::Info["freeserf.cc"] << "inside freeserf main(), both Amiga and DOS music available, randomly chose DOS";
         Audio::PTrack t = player->play_track(Audio::TypeMidiTrack0, DataSourceType::DOS);  // 0=Amiga, 1=DOS, 2=Custom
       }
+      player->enable(false);
     }else if(data.get_data_source_Amiga() != nullptr){
       Log::Info["freeserf.cc"] << "inside freeserf main(), starting audio midi music, found only Amiga music, using it";
       Audio::PTrack t = player->play_track(Audio::TypeMidiTrack0, DataSourceType::Amiga);  // 0=Amiga, 1=DOS, 2=Custom
+      player->enable(false);
     }else if(data.get_data_source_DOS() != nullptr){
       Log::Info["freeserf.cc"] << "inside freeserf main(), starting audio midi music, found only DOS music, using it";
       Audio::PTrack t = player->play_track(Audio::TypeMidiTrack0, DataSourceType::DOS);  // 0=Amiga, 1=DOS, 2=Custom
+      player->enable(false);
     }else{
       // music not available
       Log::Error["freeserf.cc"] << "inside freeserf main(), neither Amiga nor DOS music found, this should not happen as game should not even start without either"; 

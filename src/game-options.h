@@ -48,6 +48,10 @@ extern bool option_CheckPathBeforeAttack;  // this is forced on
 extern bool option_SpinningAmigaStar;
 extern bool option_HighMinerFoodConsumption;
 
+extern bool option_Music;
+extern bool option_SFX;
+extern float option_Volume;
+
 extern unsigned int mapgen_size;
 extern uint16_t mapgen_trees;
 extern uint16_t mapgen_stonepile_dense;

@@ -77,6 +77,10 @@ bool option_CheckPathBeforeAttack = true;  // this is forced on
 bool option_SpinningAmigaStar = true;
 bool option_HighMinerFoodConsumption = false;
 
+bool option_Music = true;
+bool option_SFX = true;
+float option_Volume = 0.99F;
+
 // map generator settings
 /*
     // reasonable values for trees are 0.00-4.00, so divide max slider 65500 by 4 to get 16375 and let 1.00 == 16375
@@ -265,6 +269,10 @@ Game::reset_game_options_defaults() {
   option_CheckPathBeforeAttack = true;  // this is forced on
   option_SpinningAmigaStar = true;
   option_HighMinerFoodConsumption = false;
+
+  option_Music = true;
+  option_SFX = true;
+  option_Volume = 0.99F;
 }
 
 /* Clear the serf request bit of all flags and buildings.
