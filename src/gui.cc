@@ -348,11 +348,22 @@ GuiObject::handle_event(const Event *event) {
   //  
   FloatList::reverse_iterator fl = floats.rbegin();
   for ( ; fl != floats.rend() ; ++fl) {
-    Log::Debug["gui.cc"] << "inside GuiObject::handle_event for fl with objclass " << int((*fl)->get_objclass()) << " and objtype " << int((*fl)->get_objtype()) << ", calling handle_event for this fl";
+    // For some odd reason, the value of *fl sometimes changes when floats are modified. e.g. when GuiObject::del_float() is called.
+    // If this changed value is used a segmentation fault occurs.
+    // This might be a bug in std::list<>::reverse_iterator.
+    // Storing the value of *fl in a local variable fixes this.
+    GuiObject* tmp_fl = *fl;
+    Log::Debug["gui.cc"] << "inside GuiObject::handle_event for fl with objclass " << int(tmp_fl->get_objclass()) << " and objtype " << int(tmp_fl->get_objtype()) << ", calling handle_event for this fl";
     bool result = (*fl)->handle_event(&internal_event);
     if (result != 0) {
       // stop checking other floats as one seems to have handled this
-      Log::Debug["gui.cc"] << "inside GuiObject::handle_event for fl with objclass " << int((*fl)->get_objclass()) << " and objtype " << int((*fl)->get_objtype()) << " returning float element result";
+
+      // This is the original broken version (= remove it)
+//      Log::Debug["gui.cc"] << "inside GuiObject::handle_event for fl with objclass " << int((*fl)->get_objclass()) << " and objtype " << int(tmp_fl->get_objtype()) << " returning float element result";
+
+      // This is the new fixed version
+      Log::Debug["gui.cc"] << "inside GuiObject::handle_event for fl with objclass " << int(tmp_fl->get_objclass()) << " and objtype " << int(tmp_fl->get_objtype()) << " returning float element result";
+
       return result; 
     }else{
       // check next float
