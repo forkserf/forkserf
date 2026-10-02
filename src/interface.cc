@@ -1499,6 +1499,18 @@ Interface::handle_key_pressed(char key, int modifier) {
       break;
     }
 
+    case -67: { // '½'
+    	if (player->has_notification()) {
+    		open_message();
+    	} else {
+    		return_from_message();
+        if (notification_box != nullptr && notification_box->is_displayed()) {
+          close_message();
+        }
+      }
+      break;
+    }
+
     // new Forkserf debug overlay, highlight items on map and provide misc debug info as needed
     case 'd': {
       Log::Info["interface"] << "'d' key pressed, toggling LayerDebug";
